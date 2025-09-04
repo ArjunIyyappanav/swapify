@@ -1,12 +1,11 @@
 import './App.css'
 
-function App() {
 
-  return(
-    <>
-    <h1>Hello World</h1>
-    </>
-  )
+function App() {
+  return (
+    <p>Hi</p>
+  );
 }
 
-export default App
+export default App;
+

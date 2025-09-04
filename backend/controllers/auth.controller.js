@@ -1,0 +1,104 @@
+import {generateToken} from "../lib/utils.js";
+import User from "../models/Users.js";
+import bcrypt from "bcryptjs";
+
+export const signup = async(req,res)=>{
+    const {name,email,password,skills_offered,skills_wanted} = req.body;
+    try{
+        if(!name||!email||!password){
+            return res.status(400).json({message:"Please provide all the fields"});
+        }
+
+        // Restrict signups to institutional emails only
+        if(!/^[^\s@]+@vitstudent\.ac\.in$/i.test(email)){
+            return res.status(400).json({message:"Only @vitstudent.ac.in emails are allowed"});
+        }
+
+        if(password.length<6){
+            return res.status(400).json({message:"Password must be at least 6 characters"});
+        }
+
+        const userexists = await User.findOne({email});
+
+        if(userexists){
+            return res.status(400).json({message:"User already exists"});
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedpassword = await bcrypt.hash(password,salt);
+
+        const newUser = new User({
+            name, email, password: hashedpassword, skills_offered, skills_wanted
+        })
+
+        if(newUser){
+            generateToken(newUser._id,res);
+            await newUser.save();
+            return res.status(201).json({
+                _id: newUser._id,
+                name: newUser.name,
+                email: newUser.email,
+                skills_offered: newUser.skills_offered,
+                skills_wanted: newUser.skills_wanted
+            })
+        }else{
+            return res.status(400).json({message:"Invalid user data"});
+        }   
+    }catch(err){
+        console.log("Error in Signup:",err);
+        res.status(500).json({message:"Server error"});
+    }
+}
+
+export const login = async(req,res)=>{
+    const {email,password} = req.body;
+    try{
+        if(!email||!password){
+            return res.status(400).json({message:"Please provide all the fields"});
+        }
+
+        const user = await User.findOne({ email });
+        console.log(user);
+        if(!user){
+            return res.status(400).json({message:"User does not exist"});
+        }
+
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+        if(!isPasswordCorrect){
+            return res.status(400).json({message:"Invalid credentials"});
+        }
+
+        generateToken(user._id,res);
+        const { _id, name, email: userEmail, skills_offered, skills_wanted } = user;
+        res.status(200).json({ _id, name, email: userEmail, skills_offered, skills_wanted })
+    }catch(err){
+        console.log("Error in login:",err);
+        return res.status(500).json({message:"Internal Server error"});
+    }
+}
+
+export const logout = (req,res)=>{
+    try{
+        // Clear cookie using same attributes as set to ensure removal
+        const isProd = process.env.NODE_ENV === 'production';
+        res.cookie('jwt','',{ httpOnly: true, secure: isProd, sameSite: isProd ? 'none' : 'lax', expires: new Date(0) });
+        return res.status(200).json({message:"Logged out successfully"});
+    }catch(err){
+        console.log("Error in logout:",err);
+        return res.status(500).json({message:"Internal Server error"});
+    }
+}
+
+export const checkAuth = async(req,res)=>{
+    try{
+        const user = await User.findById(req.user._id).select('-password');
+        if(!user){
+            return res.status(400).json({message:"User does not exist"});
+        }
+        return res.status(200).json(user);
+    }catch(err){
+        console.log("Error in checkAuth:",err);
+        return res.status(500).json({message:"Internal Server error"});
+    }
+}
