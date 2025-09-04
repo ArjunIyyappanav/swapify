@@ -11,6 +11,8 @@ import SwapRequests from "./pages/SwapRequests";
 import Settings from "./pages/Settings";
 import MySkills from "./pages/MySkills";
 import Chat from "./pages/Chat";
+import Search from "./pages/Search";
+import ProfileView from "./pages/ProfileView";
 import { createRoot } from 'react-dom/client'
 import './index.css'
 
@@ -24,6 +26,8 @@ function Root() {
         {/* Public Routes */}
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+        <Route path="/user/:id" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
 
         {/* Protected Routes */}
         <Route path="/dashboard" element={

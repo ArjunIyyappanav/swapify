@@ -8,6 +8,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -41,6 +42,9 @@ export default function Navbar() {
           <Search className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
           <input
             type="text"
+            value={query}
+            onChange={(e)=>setQuery(e.target.value)}
+            onKeyDown={(e)=>{ if(e.key==='Enter'){ navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search'); } }}
             placeholder="Search skills..."
             className="pl-10 pr-4 py-2 rounded-lg bg-gray-800 border border-gray-700 placeholder:text-gray-400 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
@@ -53,6 +57,10 @@ export default function Navbar() {
         <button className="relative">
           <Bell className="w-6 h-6 text-gray-300 hover:text-blue-400" />
           <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+        </button>
+        {/* Mobile search trigger */}
+        <button className="md:hidden" onClick={()=>navigate(query ? `/search?q=${encodeURIComponent(query)}` : '/search')}>
+          <Search className="w-6 h-6 text-gray-300 hover:text-blue-400" />
         </button>
 
         {/* User Dropdown */}

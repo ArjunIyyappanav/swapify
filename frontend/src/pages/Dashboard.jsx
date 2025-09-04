@@ -84,14 +84,7 @@ export default function Dashboard() {
           <button className="md:hidden px-3 py-2 rounded bg-gray-900 border border-gray-800" onClick={() => setSidebarOpen(true)}>
             <Menu className="w-6 h-6" />
           </button>
-          <div className="relative flex-1 max-w-md">
-            <input
-              type="text"
-              placeholder="Search skills..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-900 border border-gray-800 placeholder:text-gray-400 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
-          </div>
+          {/* Search removed in favor of navbar search */}
           <div className="flex items-center space-x-4">
             <button onClick={() => navigate('/post-request')} className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700">Create Request</button>
           </div>

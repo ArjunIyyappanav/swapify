@@ -102,3 +102,38 @@ export const checkAuth = async(req,res)=>{
         return res.status(500).json({message:"Internal Server error"});
     }
 }
+
+export const searchUsers = async (req, res) => {
+    try {
+        const q = (req.query.q || '').trim();
+        if (!q) return res.json([]);
+        // Escape regex chars, also allow spaces to match across words
+        const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = safe.replace(/\s+/g, '.*');
+        const regex = new RegExp(pattern, 'i');
+        const users = await User.find({
+            $or: [
+                { name: regex },
+                { email: regex },
+                { skills_offered: regex },
+                { skills_wanted: regex },
+            ]
+        }).select('-password').limit(20);
+        res.json(users);
+    } catch (err) {
+        console.log('Error in searchUsers:', err);
+        res.status(500).json({ message: 'Server Error' });
+    }
+}
+
+export const getPublicUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id).select('-password');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json(user);
+    } catch (err) {
+        console.log('Error in getPublicUser:', err);
+        res.status(500).json({ message: 'Server Error' });
+    }
+}
