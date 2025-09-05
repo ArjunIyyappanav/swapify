@@ -17,8 +17,7 @@ dotenv.config()
 const app = express()
 
 app.use(cookieParser());
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
-app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }))
+app.use(cors({ origin: process.env.FRONTEND_ORIGIN, credentials: true }))
 app.use(express.json())
 
 app.use('/api',authrouter);
