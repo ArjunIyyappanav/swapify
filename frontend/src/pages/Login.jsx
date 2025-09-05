@@ -22,32 +22,45 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-950 text-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-gray-900 border border-gray-800 p-8 rounded-2xl shadow w-96"
-      >
-        <h1 className="text-2xl font-bold mb-6">Login</h1>
-        <input
-          name="email"
-          placeholder="Email"
-          onChange={handleChange}
-          className="w-full p-2 mb-3 rounded bg-gray-800 border border-gray-700 placeholder:text-gray-400"
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          onChange={handleChange}
-          className="w-full p-2 mb-4 rounded bg-gray-800 border border-gray-700 placeholder:text-gray-400"
-        />
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+    <div className="flex items-center justify-center min-h-screen bg-gray-950 text-gray-100 p-4">
+      <div className="w-full max-w-md">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-gray-900 border border-gray-800 p-6 sm:p-8 rounded-2xl shadow-lg"
         >
-          Login
-        </button>
-      </form>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center">Login</h1>
+          <input
+            name="email"
+            placeholder="Email"
+            onChange={handleChange}
+            className="w-full p-3 mb-4 rounded-lg bg-gray-800 border border-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none transition-colors"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            onChange={handleChange}
+            className="w-full p-3 mb-6 rounded-lg bg-gray-800 border border-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none transition-colors"
+          />
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            Login
+          </button>
+          
+          <div className="mt-6 text-center">
+            <p className="text-gray-400 mb-3">Don't have an account?</p>
+            <button
+              type="button"
+              onClick={() => navigate('/signup')}
+              className="w-full bg-gray-800 text-white py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium border border-gray-700"
+            >
+              Create Account
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

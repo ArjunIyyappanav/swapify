@@ -22,7 +22,7 @@ function Root() {
       <Navbar />
       <Routes>
         {/* Default Route */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         {/* Public Routes */}
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
@@ -93,7 +93,7 @@ function Root() {
           }
         />
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </div>
   );
