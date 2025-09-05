@@ -26,7 +26,7 @@ app.use('/api',chatRouter);
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: FRONTEND_ORIGIN, credentials: true }
+  cors: { origin: process.env.FRONTEND_ORIGIN, credentials: true }
 });
 
 // Expose io to routes/controllers
@@ -81,7 +81,7 @@ io.on('connection', (socket) => {
   });
 });
 
-mongoose.connect(process.env.MONGODB_URI).
+mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 15000, family: 4 }).
 then(server.listen(process.env.PORT, () => {
     console.log(`MongoDB Connection successful\nServer running on port ${process.env.PORT}`)
 }))
