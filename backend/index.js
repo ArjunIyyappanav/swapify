@@ -19,13 +19,14 @@ const app = express()
 app.use(cookieParser());
 app.use(cors({ origin: process.env.FRONTEND_ORIGIN, credentials: true }))
 app.use(express.json())
+console.log(process.env.FRONTEND_ORIGIN,process.env.PORT,process.env.MONGODB_URI);
 
 app.use('/api',authrouter);
 app.use('/api',requestsrouter);
 app.use('/api',chatRouter);
 
 const server = http.createServer(app);
-const io = new Server(server, {
+const io = new Server(server, { 
   cors: { origin: process.env.FRONTEND_ORIGIN, credentials: true }
 });
 
@@ -81,7 +82,9 @@ io.on('connection', (socket) => {
   });
 });
 
-mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 15000, family: 4 }).
-then(server.listen(process.env.PORT, () => {
-    console.log(`MongoDB Connection successful\nServer running on port ${process.env.PORT}`)
-}))
+mongoose.connect(process.env.MONGODB_URI)
+    .then(()=>{
+        app.listen(process.env.PORT, ()=>{
+            console.log("Connection successful, App listening on port " + process.env.PORT);
+        })
+    })
