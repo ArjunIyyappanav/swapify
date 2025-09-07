@@ -103,6 +103,36 @@ export const checkAuth = async(req,res)=>{
     }
 }
 
+export const updateSkills = async(req,res)=>{
+    try{
+        const {skills_offered, skills_wanted} = req.body;
+        const userId = req.user._id;
+
+        if(!userId){
+            return res.status(401).json({message:"Not authorized"});
+        }
+
+        const updateData = {};
+        if(skills_offered !== undefined) updateData.skills_offered = skills_offered;
+        if(skills_wanted !== undefined) updateData.skills_wanted = skills_wanted;
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId, 
+            updateData, 
+            {new: true}
+        ).select('-password');
+
+        if(!updatedUser){
+            return res.status(404).json({message:"User not found"});
+        }
+
+        return res.status(200).json(updatedUser);
+    }catch(err){
+        console.log("Error in updateSkills:",err);
+        return res.status(500).json({message:"Internal Server error"});
+    }
+}
+
 export const searchUsers = async (req, res) => {
     try {
         const q = (req.query.q || '').trim();

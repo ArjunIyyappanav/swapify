@@ -3,13 +3,45 @@ import { useNavigate } from "react-router-dom";
 import axios from "../utils/api";
 
 export default function Signup() {
-  const [formData, setFormData] = useState({ name: "", email: "", password: "", skills_offered: "", skills_wanted: "" });
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "", skills_offered: "", skills_wanted: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
 
-  const handleChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    const { name, value } = e.target;
+    const newFormData = { ...formData, [name]: value };
+    setFormData(newFormData);
+    
+    // Validate password confirmation
+    if (name === 'confirmPassword' || name === 'password') {
+      if (newFormData.password && newFormData.confirmPassword) {
+        if (newFormData.password !== newFormData.confirmPassword) {
+          setPasswordError("Passwords do not match");
+        } else {
+          setPasswordError("");
+        }
+      } else if (newFormData.password && newFormData.confirmPassword === "") {
+        setPasswordError("");
+      }
+    }
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
+    
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+    
+    if (formData.password.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      return;
+    }
+    
     try {
       const payload = {
         name: formData.name,
@@ -47,13 +79,43 @@ export default function Signup() {
             className="w-full p-3 mb-4 rounded-lg bg-gray-800 border border-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none transition-colors" 
           />
           
-          <input 
-            type="password" 
-            name="password" 
-            placeholder="Password (min 6 characters)" 
-            onChange={handleChange} 
-            className="w-full p-3 mb-4 rounded-lg bg-gray-800 border border-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none transition-colors" 
-          />
+          <div className="relative mb-4">
+            <input 
+              type={showPassword ? "text" : "password"}
+              name="password" 
+              placeholder="Password (min 6 characters)" 
+              onChange={handleChange} 
+              className="w-full p-3 pr-10 rounded-lg bg-gray-800 border border-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none transition-colors" 
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </button>
+          </div>
+          
+          <div className="relative mb-4">
+            <input 
+              type={showConfirmPassword ? "text" : "password"}
+              name="confirmPassword" 
+              placeholder="Confirm Password" 
+              onChange={handleChange} 
+              className="w-full p-3 pr-10 rounded-lg bg-gray-800 border border-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none transition-colors" 
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+            >
+              {showConfirmPassword ? "🙈" : "👁️"}
+            </button>
+          </div>
+          
+          {passwordError && (
+            <div className="text-red-400 text-sm mb-4">{passwordError}</div>
+          )}
           
           <input 
             name="skills_offered" 

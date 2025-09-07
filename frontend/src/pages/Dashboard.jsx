@@ -41,7 +41,7 @@ export default function Dashboard() {
 
   const navigation = [
     { name: "Dashboard", icon: Home, to: "/dashboard" },
-    { name: "My Skills", icon: Layers, to: "/dashboard" },
+    { name: "My Skills", icon: Layers, to: "/my-skills" },
     { name: "Swap Requests", icon: Repeat, to: "/swap-requests" },
     { name: "Profile", icon: User, to: "/profile" },
     { name: "Settings", icon: Settings, to: "/settings" },

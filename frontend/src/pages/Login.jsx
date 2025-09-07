@@ -4,6 +4,7 @@ import axios from "../utils/api";
 
 export default function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();   // ✅ hook
 
   const handleChange = e =>
@@ -13,7 +14,8 @@ export default function Login() {
     e.preventDefault();
     try {
       await axios.post("/auth/login", formData, { withCredentials: true });
-      // alert("Login successfull!");
+      // Trigger a custom event to update navbar
+      window.dispatchEvent(new Event('userLogin'));
       navigate("/dashboard");   // ✅ redirect after login
     } catch (err) {
       console.error(err);
@@ -35,13 +37,22 @@ export default function Login() {
             onChange={handleChange}
             className="w-full p-3 mb-4 rounded-lg bg-gray-800 border border-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none transition-colors"
           />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            onChange={handleChange}
-            className="w-full p-3 mb-6 rounded-lg bg-gray-800 border border-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none transition-colors"
-          />
+          <div className="relative mb-6">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              onChange={handleChange}
+              className="w-full p-3 pr-10 rounded-lg bg-gray-800 border border-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none transition-colors"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </button>
+          </div>
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"

@@ -20,6 +20,26 @@ export default function Navbar() {
     fetchUser();
   }, []);
 
+  // Listen for storage events and custom login events to update user
+  useEffect(() => {
+    const handleUserUpdate = () => {
+      const fetchUser = async () => {
+        try {
+          const res = await axios.get("/auth/checkAuth", { withCredentials: true });
+          setUser(res.data);
+        } catch {}
+      };
+      fetchUser();
+    };
+
+    window.addEventListener('storage', handleUserUpdate);
+    window.addEventListener('userLogin', handleUserUpdate);
+    return () => {
+      window.removeEventListener('storage', handleUserUpdate);
+      window.removeEventListener('userLogin', handleUserUpdate);
+    };
+  }, []);
+
   const handleLogout = async () => {
     try {
       await axios.post("/auth/logout", {}, { withCredentials: true });
