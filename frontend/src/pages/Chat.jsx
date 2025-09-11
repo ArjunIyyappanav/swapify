@@ -3,6 +3,27 @@ import { useLocation } from "react-router-dom";
 import axios from "../utils/api";
 import { io } from "socket.io-client";
 
+// --- SVG Icon Components for a cleaner UI ---
+
+const VideoCameraIcon = ({ className = "w-6 h-6" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9A2.25 2.25 0 0 0 13.5 5.25h-9A2.25 2.25 0 0 0 2.25 7.5v9A2.25 2.25 0 0 0 4.5 18.75Z" />
+  </svg>
+);
+
+const SendIcon = ({ className = "w-6 h-6" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+  </svg>
+);
+
+const XMarkIcon = ({ className = "w-6 h-6" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+    </svg>
+);
+
+
 export default function Chat() {
   const [matches, setMatches] = useState([]);
   const [active, setActive] = useState(null);
@@ -16,6 +37,8 @@ export default function Chat() {
   const bottomRef = useRef(null);
   const location = useLocation();
 
+  // --- All your logic functions (loadMatches, loadMe, etc.) remain the same ---
+  // --- No changes needed for the useEffect hooks or logic functions ---
   const loadMatches = async () => {
     const res = await axios.get('/chat/matches', { withCredentials: true });
     const list = res.data || [];
@@ -40,14 +63,12 @@ export default function Chat() {
     if (!active || !input.trim()) return;
     try {
       const { data } = await axios.post(`/chat/${active._id}/messages`, { content: input }, { withCredentials: true });
-      // Optimistically append; socket will also deliver to other participant
       setMessages(prev => [...prev, data]);
       setInput("");
     } catch (e) {
       console.error(e);
     }
   };
-
   const sendMeetInvite = async () => {
     if (!active || !meetUrl.trim()) return;
     try {
@@ -61,19 +82,17 @@ export default function Chat() {
       console.error(e);
     }
   };
-
   const handleStartMeet = () => {
     window.open('https://meet.new', '_blank', 'noopener');
     setShowMeetInput(true);
   };
-
   const renderContent = (text) => {
     try {
       const urlRegex = /(https?:\/\/[^\s]+)/g;
       const parts = String(text).split(urlRegex);
       return parts.map((part, idx) => {
         if (urlRegex.test(part)) {
-          return <a key={idx} href={part} target="_blank" rel="noreferrer" className="underline text-blue-200 break-words">{part}</a>;
+          return <a key={idx} href={part} target="_blank" rel="noreferrer" className="underline text-indigo-300 break-words hover:text-indigo-200 transition-colors">{part}</a>;
         }
         return <span key={idx}>{part}</span>;
       });
@@ -81,7 +100,6 @@ export default function Chat() {
       return text;
     }
   };
-
   useEffect(() => {
     loadMe();
     loadMatches();
@@ -98,7 +116,6 @@ export default function Chat() {
     });
     return () => { s.close(); };
   }, []);
-
   useEffect(() => {
     if (active && socketRef.current) {
       activeRef.current = active._id;
@@ -106,55 +123,131 @@ export default function Chat() {
       loadMessages(active._id);
     }
   }, [active]);
-
   useEffect(() => {
-    // Auto-scroll to the newest message
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, active]);
 
+  const activeMatchUser = me && active ? (String(active.user1._id) === String(me._id) ? active.user2 : active.user1) : null;
+
   return (
-    <div className="h-[calc(100vh-64px)] grid grid-cols-12 bg-gray-950 text-gray-100">
-      <aside className="col-span-4 border-r border-gray-800 overflow-y-auto">
-        <h2 className="px-4 py-3 text-lg font-semibold">Matches</h2>
-        {matches.map(m => {
-          const other = me && (String(m.user1._id) === String(me._id) ? m.user2 : m.user1);
-          return (
-            <button key={m._id} onClick={() => setActive(m)} className={`w-full text-left px-4 py-3 hover:bg-gray-900 ${active?._id===m._id?'bg-gray-900':''}`}>
-              <div className="font-medium">{other?.name || 'User'}</div>
-              <div className="text-xs text-gray-400">{m.skillfromuser1} ⇄ {m.skillfromuser2}</div>
-            </button>
-          );
-        })}
+    <div className="h-[calc(100vh-64px)] grid grid-cols-12 bg-neutral-900 text-neutral-200 font-sans">
+      
+      {/* --- Matches Sidebar --- */}
+      <aside className="col-span-12 md:col-span-4 lg:col-span-3 bg-neutral-950/50 border-r border-neutral-800 flex flex-col">
+        <div className="px-4 py-3 border-b border-neutral-800">
+          <h2 className="text-xl font-bold tracking-tight">Matches</h2>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {matches.map(m => {
+            const other = me && (String(m.user1._id) === String(me._id) ? m.user2 : m.user1);
+            return (
+              <button 
+                key={m._id} 
+                onClick={() => setActive(m)} 
+                className={`w-full flex items-center gap-3 text-left p-3 rounded-lg transition-colors duration-200 ${active?._id === m._id ? 'bg-neutral-800' : 'hover:bg-neutral-800/50'}`}
+              >
+                <div className="relative w-12 h-12 rounded-full bg-indigo-500 flex-shrink-0 flex items-center justify-center font-bold text-white">
+                  {other?.name?.charAt(0).toUpperCase()}
+                  {/* You can add an online status indicator here */}
+                  {/* <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-neutral-900" /> */}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">{other?.name || 'User'}</p>
+                    <p className="text-xs text-neutral-400 truncate">{m.skillfromuser1} ⇄ {m.skillfromuser2}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </aside>
-      <section className="col-span-8 flex flex-col">
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {!active ? (
-            <div className="text-gray-400">Select a match to start chatting</div>
-          ) : (
-            messages.map(msg => (
-              <div key={msg._id} className={`max-w-[75%] rounded-2xl px-4 py-2 ${String(msg.sender)===String(me?._id)?'bg-blue-600 text-white ml-auto':'bg-gray-800 text-gray-100'}`}>
-                <div className="whitespace-pre-wrap break-words">{renderContent(msg.content)}</div>
-                <div className="text-[10px] opacity-70 mt-1">{new Date(msg.createdAt).toLocaleTimeString()}</div>
-              </div>
-            ))
-          )}
-          <div ref={bottomRef} />
-        </div>
-        <div className="border-t border-gray-800 p-3 flex flex-col gap-2">
-          {showMeetInput && (
-            <div className="flex gap-2">
-              <input value={meetUrl} onChange={e=>setMeetUrl(e.target.value)} placeholder="Paste Google Meet link and press Send invite" className="flex-1 px-3 py-2 rounded bg-gray-900 border border-gray-800 placeholder:text-gray-400" />
-              <button onClick={sendMeetInvite} className="px-4 py-2 rounded bg-green-600 hover:bg-green-700">Send invite</button>
-              <button onClick={()=>{ setShowMeetInput(false); setMeetUrl(''); }} className="px-3 py-2 rounded bg-gray-700 hover:bg-gray-600">Cancel</button>
+
+      {/* --- Main Chat Section --- */}
+      <section className="col-span-12 md:col-span-8 lg:col-span-9 flex flex-col bg-neutral-900">
+        {!active ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center text-neutral-500">
+              <h3 className="text-xl font-medium">Welcome to Swapify Chat</h3>
+              <p>Select a match to start a conversation.</p>
             </div>
-          )}
-          <div className="flex gap-2">
-            <button onClick={handleStartMeet} className="px-3 py-2 rounded bg-purple-600 hover:bg-purple-700">Start Meet</button>
-            <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter') sendMessage(); }} placeholder="Type a message..." className="flex-1 px-3 py-2 rounded bg-gray-900 border border-gray-800 placeholder:text-gray-400" />
-            <button onClick={sendMessage} className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700">Send</button>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Chat Header */}
+            <div className="flex items-center justify-between p-3 border-b border-neutral-800 bg-neutral-950/50 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="relative w-10 h-10 rounded-full bg-indigo-500 flex-shrink-0 flex items-center justify-center font-bold text-white">
+                        {activeMatchUser?.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <p className="font-bold">{activeMatchUser?.name}</p>
+                        {/* Optional: Add user status like "online" or "typing..." */}
+                        <p className="text-xs text-green-400">Online</p>
+                    </div>
+                </div>
+              <button 
+                onClick={handleStartMeet} 
+                className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded-full transition-colors"
+                aria-label="Start Google Meet"
+              >
+                <VideoCameraIcon />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+              <div className="flex flex-col gap-4">
+                {messages.map(msg => (
+                  <div 
+                    key={msg._id} 
+                    className={`flex flex-col max-w-[75%] md:max-w-[60%] ${String(msg.sender) === String(me?._id) ? 'self-end items-end' : 'self-start items-start'}`}
+                  >
+                    <div className={`rounded-xl px-4 py-3 shadow-md ${String(msg.sender) === String(me?._id) ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-neutral-700 text-neutral-100 rounded-bl-none'}`}>
+                      <div className="whitespace-pre-wrap break-words">{renderContent(msg.content)}</div>
+                    </div>
+                    <div className="text-xs text-neutral-500 mt-1.5">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                  </div>
+                ))}
+              </div>
+              <div ref={bottomRef} />
+            </div>
+
+            {/* Input Area */}
+            <div className="border-t border-neutral-800 p-3 md:p-4 bg-neutral-950/50 space-y-2">
+              {showMeetInput && (
+                <div className="flex items-center gap-2 bg-neutral-800 p-2 rounded-lg animate-fade-in-down">
+                  <input 
+                    value={meetUrl} 
+                    onChange={e => setMeetUrl(e.target.value)} 
+                    placeholder="Paste Google Meet link here..." 
+                    className="flex-1 px-3 py-2 rounded-md bg-neutral-700 border border-neutral-600 placeholder:text-neutral-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" 
+                  />
+                  <button onClick={sendMeetInvite} className="px-4 py-2 rounded-md bg-green-600 hover:bg-green-700 font-semibold transition-colors">Invite</button>
+                  <button onClick={() => { setShowMeetInput(false); setMeetUrl(''); }} className="p-2 rounded-md bg-neutral-600 hover:bg-neutral-500 transition-colors">
+                    <XMarkIcon className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <input 
+                  value={input} 
+                  onChange={e => setInput(e.target.value)} 
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} 
+                  placeholder="Type a message..." 
+                  className="flex-1 px-4 py-2 rounded-full bg-neutral-800 border border-transparent placeholder:text-neutral-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" 
+                />
+                <button 
+                  onClick={sendMessage} 
+                  className="p-3 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-900 disabled:cursor-not-allowed transition-colors"
+                  disabled={!input.trim()}
+                  aria-label="Send Message"
+                >
+                  <SendIcon className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </section>
     </div>
   );
-} 
+}

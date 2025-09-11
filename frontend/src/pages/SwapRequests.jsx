@@ -1,140 +1,197 @@
 import { useEffect, useState } from "react";
 import axios from "../utils/api";
 import { useNavigate } from "react-router-dom";
+import { Send, Inbox, ArrowRightLeft, Check, X, MessageSquare } from "lucide-react";
 
-export default function SwapRequests() {
-  const [sent, setSent] = useState([]);
-  const [received, setReceived] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+// --- Reusable Components for this page ---
 
-  const refresh = async () => {
-    const res = await axios.get("/request/mine", { withCredentials: true });
-    setSent(res.data.sent || []);
-    setReceived(res.data.received || []);
-  };
+const Spinner = ({ text = "Loading Requests..." }) => (
+  <div className="flex flex-col items-center justify-center p-10">
+    <svg className="animate-spin h-8 w-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <p className="mt-4 text-neutral-400">{text}</p>
+  </div>
+);
 
+const Toast = ({ message, onDismiss }) => {
   useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        await refresh();
-      } catch (err) {
-        console.error("Failed to fetch requests", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRequests();
-  }, []);
-
-  const updateStatus = async (requestId, status) => {
-    try {
-      const res = await axios.patch("/requests/update", { requestId, status }, { withCredentials: true });
-      await refresh();
-      if (status === 'accepted') {
-        try {
-          // Find the corresponding match and navigate directly to it
-          const { data: matches } = await axios.get('/chat/matches', { withCredentials: true });
-          const updated = sent.concat(received).find(r => r._id === requestId);
-          let matchId = null;
-          if (updated) {
-            matchId = (matches || []).find(m => (
-              (String(m.user1?._id) === String(updated.fromUser?._id) && String(m.user2?._id) === String(updated.toUser?._id)) ||
-              (String(m.user2?._id) === String(updated.fromUser?._id) && String(m.user1?._id) === String(updated.toUser?._id))
-            ))?._id;
-          }
-          navigate(matchId ? `/chat?matchId=${matchId}` : '/chat');
-        } catch (_) {
-          navigate('/chat');
-        }
-      }
-    } catch (err) {
-      console.error("Failed to update request", err);
-      alert("Failed to update request");
-    }
-  };
-
-  if (loading) return null;
+    const timer = setTimeout(() => onDismiss(), 3000);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8 text-gray-100">
-      <div>
-        <h2 className="text-2xl font-semibold mb-4">Requests You Sent</h2>
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow divide-y divide-gray-800">
-          {sent.length === 0 ? (
-            <div className="p-4 text-gray-400">No sent requests.</div>
-          ) : (
-            sent.map(req => (
-              <div key={req._id} className="p-4 flex items-center justify-between">
-                <div>
-                  <div className="font-medium">To: {req.toUser?.name || 'Unknown'}</div>
-                  <div className="text-sm text-gray-400">Offer: {req.skillOffered || '-'} | Want: {req.skillRequested || '-'}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm px-2 py-1 rounded-full bg-gray-800">{req.status}</span>
-                  {req.status === 'accepted' && (
-                    <button
-                      onClick={async () => {
-                        try {
-                          const { data: matches } = await axios.get('/chat/matches', { withCredentials: true });
-                          const m = (matches || []).find(m => (
-                            (String(m.user1?._id) === String(req.fromUser?._id) && String(m.user2?._id) === String(req.toUser?._id)) ||
-                            (String(m.user2?._id) === String(req.fromUser?._id) && String(m.user1?._id) === String(req.toUser?._id))
-                          ));
-                          navigate(m ? `/chat?matchId=${m._id}` : '/chat');
-                        } catch (_) {
-                          navigate('/chat');
-                        }
-                      }}
-                      className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm"
-                    >Open chat</button>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="text-2xl font-semibold mb-4">Requests You Received</h2>
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow divide-y divide-gray-800">
-          {received.length === 0 ? (
-            <div className="p-4 text-gray-400">No incoming requests.</div>
-          ) : (
-            received.map(req => (
-              <div key={req._id} className="p-4 flex items-center justify-between gap-4">
-                <div className="flex-1">
-                  <div className="font-medium">From: {req.fromUser?.name || 'Unknown'}</div>
-                  <div className="text-sm text-gray-400">Offer: {req.skillOffered || '-'} | Want: {req.skillRequested || '-'}</div>
-                </div>
-                {req.status === 'accepted' ? (
-                  <button
-                    onClick={async () => {
-                      try {
-                        const { data: matches } = await axios.get('/chat/matches', { withCredentials: true });
-                        const m = (matches || []).find(m => (
-                          (String(m.user1?._id) === String(req.fromUser?._id) && String(m.user2?._id) === String(req.toUser?._id)) ||
-                          (String(m.user2?._id) === String(req.fromUser?._id) && String(m.user1?._id) === String(req.toUser?._id))
-                        ));
-                        navigate(m ? `/chat?matchId=${m._id}` : '/chat');
-                      } catch (_) {
-                        navigate('/chat');
-                      }
-                    }}
-                    className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm"
-                  >Open chat</button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => updateStatus(req._id, 'accepted')} className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-sm">Accept</button>
-                    <button onClick={() => updateStatus(req._id, 'rejected')} className="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-sm">Reject</button>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+    <div className="fixed bottom-5 right-5 flex items-center p-4 rounded-lg shadow-lg text-white z-[100] animate-fade-in-up bg-red-600">
+      {message}
     </div>
   );
-} 
+};
+
+const StatusPill = ({ status }) => {
+  const styles = {
+    pending: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    accepted: "bg-green-500/10 text-green-400 border-green-500/20",
+    rejected: "bg-red-500/10 text-red-400 border-red-500/20",
+  };
+  return <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border capitalize ${styles[status] || ''}`}>{status}</span>;
+};
+
+const RequestCard = ({ req, type, onUpdateStatus, onOpenChat, updatingId }) => {
+    const otherUser = type === 'sent' ? req.toUser : req.fromUser;
+    const isPending = req.status === 'pending';
+    const isAccepted = req.status === 'accepted';
+    const isLoading = updatingId === req._id;
+
+    return (
+        <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all hover:border-neutral-700">
+            <div className="flex-1 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-indigo-500 flex-shrink-0 flex items-center justify-center font-bold text-white text-xl">
+                    {otherUser?.name?.charAt(0).toUpperCase() || '?'}
+                </div>
+                <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-neutral-200 truncate">{otherUser?.name || 'Unknown User'}</span>
+                        <StatusPill status={req.status} />
+                    </div>
+                    <div className="text-sm text-neutral-400 mt-1 flex items-center gap-2">
+                        <span>{type === 'sent' ? 'You Offer:' : 'They Offer:'} <strong>{req.skillOffered}</strong></span>
+                        <ArrowRightLeft className="w-4 h-4 text-neutral-500 flex-shrink-0" />
+                        <span>{type === 'sent' ? 'You Want:' : 'You Give:'} <strong>{req.skillRequested}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex-shrink-0 flex items-center gap-2 self-end sm:self-center">
+                {type === 'received' && isPending && (
+                    <>
+                        <button disabled={isLoading} onClick={() => onUpdateStatus(req._id, 'rejected')} className="px-3 py-1.5 text-sm bg-red-900/50 hover:bg-red-900/80 text-red-300 rounded-md font-semibold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            {isLoading ? <Spinner text="" /> : <X size={14} />} Reject
+                        </button>
+                        <button disabled={isLoading} onClick={() => onUpdateStatus(req._id, 'accepted')} className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded-md font-semibold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            {isLoading ? <Spinner text="" /> : <Check size={14} />} Accept
+                        </button>
+                    </>
+                )}
+                {isAccepted && (
+                    <button onClick={() => onOpenChat(req)} className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors flex items-center gap-2">
+                        <MessageSquare size={14} /> Open Chat
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default function SwapRequests() {
+    const [sent, setSent] = useState([]);
+    const [received, setReceived] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [updatingId, setUpdatingId] = useState(null);
+    const [notification, setNotification] = useState({ show: false, message: "" });
+    const navigate = useNavigate();
+
+    const refresh = async () => {
+        try {
+            const res = await axios.get("/request/mine", { withCredentials: true });
+            setSent(res.data.sent || []);
+            setReceived(res.data.received || []);
+        } catch (err) {
+            console.error("Failed to refresh requests", err);
+            setNotification({ show: true, message: "Could not load requests." });
+        }
+    };
+
+    useEffect(() => {
+        const fetchRequests = async () => {
+            await refresh();
+            setLoading(false);
+        };
+        fetchRequests();
+    }, []);
+
+    const findMatchAndNavigate = async (request) => {
+        try {
+            const { data: matches } = await axios.get('/chat/matches', { withCredentials: true });
+            const match = (matches || []).find(m =>
+                (String(m.user1?._id) === String(request.fromUser?._id) && String(m.user2?._id) === String(request.toUser?._id)) ||
+                (String(m.user2?._id) === String(request.fromUser?._id) && String(m.user1?._id) === String(request.toUser?._id))
+            );
+            navigate(match ? `/chat?matchId=${match._id}` : '/chat');
+        } catch (err) {
+            console.error("Failed to find match", err);
+            navigate('/chat');
+        }
+    };
+
+    const updateStatus = async (requestId, status) => {
+        setUpdatingId(requestId);
+        try {
+            await axios.patch("/requests/update", { requestId, status }, { withCredentials: true });
+            const updatedRequest = received.find(r => r._id === requestId) || sent.find(r => r._id === requestId);
+            if (status === 'accepted' && updatedRequest) {
+                await findMatchAndNavigate(updatedRequest);
+            }
+            await refresh();
+        } catch (err) {
+            console.error("Failed to update request", err);
+            setNotification({ show: true, message: "Failed to update request." });
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const renderRequestList = (requests, type) => {
+        if (requests.length === 0) {
+            return (
+                <div className="text-center p-10 bg-neutral-950 border border-neutral-800 rounded-xl text-neutral-500">
+                    <h3 className="text-lg font-medium">No {type} requests here!</h3>
+                </div>
+            );
+        }
+        return (
+            <div className="space-y-4">
+                {requests.map(req => (
+                    <RequestCard
+                        key={req._id}
+                        req={req}
+                        type={type}
+                        onUpdateStatus={updateStatus}
+                        onOpenChat={findMatchAndNavigate}
+                        updatingId={updatingId}
+                    />
+                ))}
+            </div>
+        );
+    };
+
+    if (loading) return <Spinner />;
+
+    return (
+        <>
+            {notification.show && <Toast message={notification.message} onDismiss={() => setNotification({ show: false, message: '' })} />}
+            <div className="max-w-5xl mx-auto p-4 md:p-6 text-neutral-200 font-sans space-y-8">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Swap Requests</h1>
+                    <p className="text-neutral-400 mt-1">Manage your sent and received skill swap proposals.</p>
+                </div>
+
+                <section>
+                    <h2 className="flex items-center gap-3 text-2xl font-semibold mb-4">
+                        <Send className="w-6 h-6 text-indigo-400" />
+                        Requests You Sent
+                    </h2>
+                    {renderRequestList(sent, 'sent')}
+                </section>
+
+                <section>
+                    <h2 className="flex items-center gap-3 text-2xl font-semibold mb-4">
+                        <Inbox className="w-6 h-6 text-indigo-400" />
+                        Requests You Received
+                    </h2>
+                    {renderRequestList(received, 'received')}
+                </section>
+            </div>
+        </>
+    );
+}
