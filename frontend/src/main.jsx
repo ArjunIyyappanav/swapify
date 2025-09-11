@@ -21,9 +21,12 @@ function Root() {
     <div className="min-h-screen bg-gray-950">
       <Navbar />
       <Routes>
-        {/* Default Route */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        {/* Public Routes */}
+        <Route path="/" element={
+                          <ProtectedRoute>
+                                <Navigate to="/dashboard" replace />
+                          </ProtectedRoute>
+                          }
+        />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
