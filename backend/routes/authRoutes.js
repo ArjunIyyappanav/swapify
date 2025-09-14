@@ -13,6 +13,6 @@ authrouter.get('/auth/checkAuth',protectRoute,checkAuth);
 authrouter.put('/auth/updateSkills',protectRoute,updateSkills);
 authrouter.get('/users/search', protectRoute, searchUsers);
 authrouter.get('/users/:id', protectRoute, getPublicUser);
-authrouter.get('/deleteuser/:id',protectRoute,deleteUser);
+// authrouter.get('/deleteuser/:id',protectRoute,deleteUser);
 
 export default authrouter;
