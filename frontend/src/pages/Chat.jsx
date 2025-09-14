@@ -172,7 +172,6 @@ export default function Chat() {
           </div>
         ) : (
           <>
-            {/* Chat Header */}
             <div className="flex items-center justify-between p-3 border-b border-neutral-800 bg-neutral-950/50 shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className="relative w-10 h-10 rounded-full bg-indigo-500 flex-shrink-0 flex items-center justify-center font-bold text-white">
@@ -180,8 +179,6 @@ export default function Chat() {
                     </div>
                     <div>
                         <p className="font-bold">{activeMatchUser?.name}</p>
-                        {/* Optional: Add user status like "online" or "typing..." */}
-                        <p className="text-xs text-green-400">Online</p>
                     </div>
                 </div>
               <button 
@@ -192,8 +189,7 @@ export default function Chat() {
                 <VideoCameraIcon />
               </button>
             </div>
-
-            {/* Messages */}
+            
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
               <div className="flex flex-col gap-4">
                 {messages.map(msg => (
@@ -211,7 +207,6 @@ export default function Chat() {
               <div ref={bottomRef} />
             </div>
 
-            {/* Input Area */}
             <div className="border-t border-neutral-800 p-3 md:p-4 bg-neutral-950/50 space-y-2">
               {showMeetInput && (
                 <div className="flex items-center gap-2 bg-neutral-800 p-2 rounded-lg animate-fade-in-down">
