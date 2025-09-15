@@ -15,7 +15,7 @@ const Spinner = () => (
 );
 
 export default function ProfileView() {
-  const { id } = useParams();
+  const { name } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function ProfileView() {
     const load = async () => {
       setLoading(true);
       try {
-        const { data } = await axios.get(`/users/${id}`, { withCredentials: true });
+        const { data } = await axios.get(`/users/${name}`, { withCredentials: true });
         setUser(data);
       } catch (e) {
         console.error(e);
@@ -32,10 +32,10 @@ export default function ProfileView() {
         setLoading(false);
       }
     };
-    if (id) {
+    if (name) {
         load();
     }
-  }, [id]);
+  }, [name]);
 
   if (loading) {
     return (

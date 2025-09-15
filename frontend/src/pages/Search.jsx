@@ -4,7 +4,7 @@ import axios from "../utils/api";
 import { Search as SearchIcon, X, Sparkles, Lightbulb, User, Send, SearchX, AlertTriangle } from "lucide-react";
 
 // --- Reusable Components for this page ---
-const Spinner = ({ text }) => (
+const Spinner = ({ text })  => (
   <div className="flex flex-col items-center justify-center p-10">
     <svg className="animate-spin h-8 w-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -143,12 +143,12 @@ export default function Search() {
                         {u.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                        <button onClick={() => navigate(`/user/${u._id}`)} className="text-lg font-bold hover:underline truncate">{u.name}</button>
+                        <button onClick={() => navigate(`/user/${u.name}`)} className="text-lg font-bold hover:underline truncate">{u.name}</button>
                         <div className="text-sm text-neutral-400 truncate">{u.email}</div>
                     </div>
                 </div>
                  <div className="flex-shrink-0 flex items-center gap-2">
-                    <button onClick={() => navigate(`/user/${u._id}`)} className="px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 rounded-md font-semibold transition-colors flex items-center gap-2"><User size={14}/> Profile</button>
+                    <button onClick={() => navigate(`/user/${u.name}`)} className="px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 rounded-md font-semibold transition-colors flex items-center gap-2"><User size={14}/> Profile</button>
                     <button onClick={() => handleSendRequest(u)} className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors flex items-center gap-2"><Send size={14}/> Propose Swap</button>
                 </div>
             </div>

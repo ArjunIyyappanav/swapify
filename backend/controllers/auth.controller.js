@@ -1,6 +1,9 @@
 import {generateToken} from "../lib/utils.js";
 import User from "../models/Users.js";
 import bcrypt from "bcryptjs";
+import jwt from 'jsonwebtoken';
+import {config} from 'dotenv';
+config();
 
 export const signup = async(req,res)=>{
     const {name,email,password,skills_offered,skills_wanted} = req.body;
@@ -158,12 +161,33 @@ export const searchUsers = async (req, res) => {
 
 export const getPublicUser = async (req, res) => {
     try {
-        const { id } = req.params;
-        const user = await User.findById(id).select('-password');
+        const {name} = req.params;
+        const user = await User.findOne(name).select('-password');
         if (!user) return res.status(404).json({ message: 'User not found' });
         res.json(user);
     } catch (err) {
         console.log('Error in getPublicUser:', err);
         res.status(500).json({ message: 'Server Error' });
+    }
+}
+
+
+export const deleteUser = async(req,res) =>{
+    const token = req.cookies.jwt;
+    try{
+        if(!token){
+            return res.status(401).json({message:"Not authorized"});
+        }
+        const decoded = jwt.verify(token,process.env.JWT_SECRET_KEY);
+        console.log(decoded);
+        const userId = await User.findByIdAndDelete(decoded.id).select('-password');
+
+        if(!userId){
+            return res.status(404).json({message:"User not found"});
+        }          
+        return res.status(200).json({message:"User deleted successfully"});
+    }catch(err){
+        console.log(err);
+        return res.status(401).json({message:"Not authorized, token failed"});
     }
 }

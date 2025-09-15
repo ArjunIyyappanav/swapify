@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "../utils/api";
 import { User, Palette, Bell, Shield, Trash2, X } from "lucide-react";
 
-// --- Reusable Components ---
 
 const Toast = ({ message, type, onDismiss }) => {
   useEffect(() => {
