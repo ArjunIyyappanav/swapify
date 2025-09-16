@@ -5,14 +5,17 @@ import jwt from 'jsonwebtoken';
 import {config} from 'dotenv';
 config();
 
+
 export const signup = async(req,res)=>{
     const {name,email,password,skills_offered,skills_wanted} = req.body;
     try{
         if(!name||!email||!password){
             return res.status(400).json({message:"Please provide all the fields"});
         }
-
-        // Restrict signups to institutional emails only
+        name=name.trim();
+        email=email.trim().toLowerCase();
+        skills_offered=skills_offered?skills_offered.trim():"";
+        skills_wanted=skills_wanted?skills_wanted.trim():"";    
         if(!/^[^\s@]+@vitstudent\.ac\.in$/i.test(email)){
             return res.status(400).json({message:"Only @vitstudent.ac.in emails are allowed"});
         }
@@ -162,7 +165,12 @@ export const searchUsers = async (req, res) => {
 export const getPublicUser = async (req, res) => {
     try {
         const {name} = req.params;
-        const user = await User.findOne(name).select('-password');
+        console.log(name);
+        if (!name) return res.status(400).json({ message: 'Name parameter is required' });
+        const user = await User.findOne({"name":name}).select('-password');
+        if(!user) {
+            user=await User.findOne({"name":name+" "}).select('-password')
+        };
         if (!user) return res.status(404).json({ message: 'User not found' });
         res.json(user);
     } catch (err) {

@@ -1,5 +1,6 @@
 import {Router} from "express";
 import {signup,login,logout,checkAuth, searchUsers, getPublicUser, updateSkills, deleteUser,updateUser} from "../controllers/auth.controller.js";
+import {enroll,classes} from "../controllers/class.controller.js";
 import {protectRoute} from '../middleware/auth.middleware.js'
 
 const authrouter = Router();
@@ -11,6 +12,9 @@ authrouter.get('/auth/checkAuth',protectRoute,checkAuth);
 authrouter.put('/auth/updateSkills',protectRoute,updateSkills);
 authrouter.get('/users/search', protectRoute, searchUsers);
 authrouter.get('/users/:name', protectRoute, getPublicUser);
+authrouter.get('/auth/classes', protectRoute,classes);
+// authrouter.post('/auth/createclasses',protectRoute,createClass);
+authrouter.post('/auth/enroll',protectRoute,enroll);
 authrouter.delete('/auth/account',deleteUser);
 authrouter.patch('/auth/updateProfile',updateUser);
 

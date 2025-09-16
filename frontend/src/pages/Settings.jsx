@@ -50,6 +50,32 @@ export default function Settings() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: "", type: "" });
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password,setPassword] = useState("");
+  const [conpassword,setConPassword] = useState("");
+
+   async function updateProfile(){    
+      if(conpassword!==password){
+        return;
+      }   
+      try{
+        const updateData = {"name":name,"email":email,"password":password};
+        let confirm = await axios.patch('/auth/updateProfile', updateData, { withCredentials: true });
+        setIsOpen(false);
+        if(!confirm){
+          alert("Update Failed");
+        }
+      }catch(err){ 
+        console.error("Failed to update profile", err);
+        alert("Update Failed");
+      }
+    }
+  
+    function editprofile(){
+      setIsOpen(true);
+    }
 
   const showToast = (message, type = 'error') => {
     setNotification({ show: true, message, type });
@@ -103,11 +129,8 @@ export default function Settings() {
           <div className="bg-neutral-950 border border-neutral-800 rounded-xl shadow-lg">
             <div className="p-6 border-b border-neutral-800"><h2 className="text-xl font-semibold">Account</h2></div>
             <div className="p-2 md:p-4">
-              <SettingsRow icon={User} title="Edit Profile" description="Update your name and profile information.">
-                <button onClick={() => navigate('/profile')} className="px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 rounded-md font-semibold transition-colors">Edit</button>
-              </SettingsRow>
-              <SettingsRow icon={Shield} title="Change Password" description="Update your password for better security.">
-                <button onClick={() => showToast("Password changes coming soon!")} className="px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 rounded-md font-semibold transition-colors">Change</button>
+              <SettingsRow icon={User} title="Edit Profile" description="Update your name, profile information and password.">
+                <button onClick={editprofile} className="px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 rounded-md font-semibold transition-colors">Edit</button>
               </SettingsRow>
             </div>
           </div>
@@ -165,6 +188,85 @@ export default function Settings() {
           </div>
         </div>
       )}
+
+    {isOpen && (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <form
+        onSubmit={updateProfile}
+        className="relative flex flex-col bg-neutral-900 p-6 rounded-2xl shadow-xl space-y-5 
+                   w-full max-w-md max-h-screen overflow-y-auto"
+      >
+        <button
+          onClick={() => setIsOpen(false)}
+          type="button"
+          className="absolute top-3 right-3 text-white text-lg font-bold hover:text-red-400 transition"
+        >
+          ✕
+        </button>
+          
+        <h2 className="text-white text-2xl font-semibold text-center mb-2">
+          Update Profile
+        </h2>
+
+        <div className="flex flex-col space-y-1">
+          <label className="text-sm text-gray-300">Name</label>
+          <input
+            onChange={(e) => setName(e.target.value)}
+            type="text"
+            className="px-3 py-2 rounded-xl bg-neutral-800 text-white border 
+                       border-neutral-700 focus:border-indigo-500 
+                       focus:ring focus:ring-indigo-500/30 outline-none"
+          />
+        </div>
+          
+        <div className="flex flex-col space-y-1">
+          <label className="text-sm text-gray-300">Email</label>
+          <input
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            className="px-3 py-2 rounded-xl bg-neutral-800 text-white border 
+                       border-neutral-700 focus:border-indigo-500 
+                       focus:ring focus:ring-indigo-500/30 outline-none"
+          />
+        </div>
+
+        <div className="flex flex-col space-y-1">
+          <label className="text-sm text-gray-300">Password</label>
+          <input
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            className="px-3 py-2 rounded-xl bg-neutral-800 text-white border 
+                       border-neutral-700 focus:border-indigo-500 
+                       focus:ring focus:ring-indigo-500/30 outline-none"
+          />
+        </div>
+
+        <div className="flex flex-col space-y-1">
+          <label className="text-sm text-gray-300">Confirm Password</label>
+          <input
+            onChange={(e) => setConPassword(e.target.value)}
+            type="password"
+            className="px-3 py-2 rounded-xl bg-neutral-800 text-white border 
+                       border-neutral-700 focus:border-indigo-500 
+                       focus:ring focus:ring-indigo-500/30 outline-none"
+          />
+          {conpassword !== password && (
+            <span className="text-red-500 text-xs">
+              Passwords do not match
+            </span>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          className="w-full py-2 mt-2 rounded-xl bg-gradient-to-r from-indigo-500 
+                     to-purple-600 text-white font-medium hover:from-indigo-600 
+                     hover:to-purple-700 transition"
+        >
+          Submit
+        </button>
+      </form>
+    </div>
+  )}
     </>
-  );
-}
+  )}

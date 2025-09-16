@@ -14,6 +14,7 @@ import MySkills from "./pages/MySkills";
 import Chat from "./pages/Chat";
 import Search from "./pages/Search";
 import ProfileView from "./pages/ProfileView";
+import Classes from "./pages/Classes";
 
 export default function Root() {
   return (
@@ -29,9 +30,13 @@ export default function Root() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
-        <Route path="/user/:username" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
+        <Route path="/users/:name" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
 
-        {/* Protected Routes */}
+        <Route path='/classes' element={
+          <ProtectedRoute>
+            <Classes/>
+          </ProtectedRoute>
+        }/> 
         <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
@@ -70,14 +75,18 @@ export default function Root() {
             </ProtectedRoute>
           }
         />
+        {/* <Route
+        path="/createclasses"
+        element={
+        <ProtectedRoute>
+          <Classes />
+        </ProtectedRoute>}/> */}
         <Route
           path="/settings"
           element={
             <ProtectedRoute>
               <Settings />
-            </ProtectedRoute>
-          }
-        />
+            </ProtectedRoute>}/>
         <Route
           path="/my-skills"
           element={
@@ -94,7 +103,6 @@ export default function Root() {
             </ProtectedRoute>
           }
         />
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </div>

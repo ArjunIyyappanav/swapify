@@ -64,7 +64,7 @@ export default function Search() {
       setError("");
       try {
         const { data } = await axios.get(`/users/search`, { params: { q: query }, withCredentials: true });
-        setResults(data || []);
+        setResults(data || [])
       } catch (e) {
         console.error(e);
         setResults([]);
@@ -143,12 +143,12 @@ export default function Search() {
                         {u.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                        <button onClick={() => navigate(`/user/${u.name}`)} className="text-lg font-bold hover:underline truncate">{u.name}</button>
+                        <button onClick={() => navigate(`/users/${u.name}`)} className="text-lg font-bold hover:underline truncate">{u.name}</button>
                         <div className="text-sm text-neutral-400 truncate">{u.email}</div>
                     </div>
                 </div>
                  <div className="flex-shrink-0 flex items-center gap-2">
-                    <button onClick={() => navigate(`/user/${u.name}`)} className="px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 rounded-md font-semibold transition-colors flex items-center gap-2"><User size={14}/> Profile</button>
+                    <button onClick={() => navigate(`/users/${u.name}`)} className="px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 rounded-md font-semibold transition-colors flex items-center gap-2"><User size={14}/> Profile</button>
                     <button onClick={() => handleSendRequest(u)} className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors flex items-center gap-2"><Send size={14}/> Propose Swap</button>
                 </div>
             </div>

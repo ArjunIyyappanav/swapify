@@ -2,14 +2,15 @@ import { useEffect, useState } from "react";
 import {
   Menu,
   X,
+  DraftingCompass,
   Home,
   Layers,
   Repeat,
   User,
   Settings,
   CheckCircle,
-  Send, // Icon for sent requests
-  Inbox, // Icon for received requests
+  Send, 
+  Inbox, 
 } from "lucide-react";
 import axios from "../utils/api";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -83,7 +84,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState({ skillsListed: 0, swapRequests: 0, successfulMatches: 0 });
   const [displayName, setDisplayName] = useState("Welcome");
-  const [recentActivity, setRecentActivity] = useState([]); // State for dynamic activity
+  const [recentActivity, setRecentActivity] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -104,7 +105,6 @@ export default function Dashboard() {
           successfulMatches: [...sentRequests, ...receivedRequests].filter(r => r.status === "accepted").length,
         });
 
-        // --- Dynamically generate recent activity ---
         const combinedRequests = [
             ...sentRequests.map(r => ({ ...r, type: r.status === 'accepted' ? 'accepted_match' : 'sent_request', user: r.toUser })),
             ...receivedRequests.map(r => ({ ...r, type: r.status === 'accepted' ? 'accepted_match' : 'received_request', user: r.fromUser }))
@@ -133,6 +133,7 @@ export default function Dashboard() {
   const navigation = [
     { name: "Dashboard", icon: Home, to: "/dashboard" },
     { name: "My Skills", icon: Layers, to: "/my-skills" },
+    { name: "Classes", icon: DraftingCompass, to: "/classes"},
     { name: "Swap Requests", icon: Repeat, to: "/swap-requests" },
     { name: "Profile", icon: User, to: "/profile" },
     { name: "Settings", icon: Settings, to: "/settings" },

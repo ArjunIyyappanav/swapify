@@ -16,32 +16,7 @@ const Spinner = () => (
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password,setPassword] = useState("");
-  const [conpassword,setConPassword] = useState("");
-
-  async function updateProfile(){    
-    if(conpassword!==password){
-      return;
-    }   
-    try{
-      const updateData = {"name":name,"email":email,"password":password};
-      let confirm = await axios.patch('/auth/updateProfile', updateData, { withCredentials: true });
-      setIsOpen(false);
-      if(!confirm){
-        alert("Update Failed");
-      }
-    }catch(err){ 
-      console.error("Failed to update profile", err);
-      alert("Update Failed");
-    }
-  }
-
-  function editprofile(){
-    setIsOpen(true);
-  } 
+  
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -75,14 +50,6 @@ export default function Profile() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 text-neutral-200 font-sans">
-      {/* --- Profile Header --- */}
-      <button
-        onClick={editprofile}
-        className="fixed top-20 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300"
-        >
-          Edit Profile
-        </button>
-
       <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-8 mb-6 shadow-lg flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
         <div className="relative w-32 h-32 rounded-full bg-indigo-500 flex-shrink-0 flex items-center justify-center text-white text-5xl font-bold ring-4 ring-neutral-800">
           {user.name.charAt(0).toUpperCase()}
@@ -135,80 +102,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {isOpen && (
-  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-    {/* Close button */}
-    <button
-      onClick={() => setIsOpen(false)}
-      className="absolute top-34 left-230 text-white text-xl font-bold hover:text-red-400 transition"
-    >
-      ✕
-    </button>
-
-    {/* Form Container */}
-    <form
-      onSubmit={updateProfile}
-      className="flex flex-col bg-neutral-900 p-8 rounded-2xl shadow-xl space-y-5 w-[400px] max-w-[90%]"
-    >
-      <h2 className="text-white text-2xl font-semibold text-center mb-2">
-        Update Profile
-      </h2>
-
-      {/* Name */}
-      <div className="flex flex-col space-y-1">
-        <label className="text-sm text-gray-300">Name</label>
-        <input
-          onChange={(e) => setName(e.target.value)}
-          type="text"
-          className="px-3 py-2 rounded-xl bg-neutral-800 text-white border border-neutral-700 focus:border-indigo-500 focus:ring focus:ring-indigo-500/30 outline-none"
-        />
-      </div>
-
-      {/* Email */}
-      <div className="flex flex-col space-y-1">
-        <label className="text-sm text-gray-300">Email</label>
-        <input
-          onChange={(e) => setEmail(e.target.value)}
-          type="email"
-          className="px-3 py-2 rounded-xl bg-neutral-800 text-white border border-neutral-700 focus:border-indigo-500 focus:ring focus:ring-indigo-500/30 outline-none"
-        />
-      </div>
-
-      {/* Password */}
-      <div className="flex flex-col space-y-1">
-        <label className="text-sm text-gray-300">Password</label>
-        <input
-          onChange={(e) => setPassword(e.target.value)}
-          type="password"
-          className="px-3 py-2 rounded-xl bg-neutral-800 text-white border border-neutral-700 focus:border-indigo-500 focus:ring focus:ring-indigo-500/30 outline-none"
-        />
-      </div>
-
-      {/* Confirm Password */}
-      <div className="flex flex-col space-y-1">
-        <label className="text-sm text-gray-300">Confirm Password</label>
-        <input
-          onChange={(e) => setConPassword(e.target.value)}
-          type="password"
-          className="px-3 py-2 rounded-xl bg-neutral-800 text-white border border-neutral-700 focus:border-indigo-500 focus:ring focus:ring-indigo-500/30 outline-none"
-        />
-        {conpassword !== password && (
-          <span className="text-red-500 text-xs">
-            Passwords do not match
-          </span>
-        )}
-      </div>
-
-      {/* Submit Button */}
-      <button
-        type="submit"
-        className="w-full py-2 mt-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium hover:from-indigo-600 hover:to-purple-700 transition"
-      >
-        Submit
-      </button>
-    </form>
-  </div>
-)}
+  
     </div>
   );
-}
+} 
