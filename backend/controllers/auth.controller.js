@@ -191,3 +191,32 @@ export const deleteUser = async(req,res) =>{
         return res.status(401).json({message:"Not authorized, token failed"});
     }
 }
+
+export const updateUser = async(req,res) =>{
+    const token = req.cookies.jwt;  
+    try{
+        if(!token){
+            res.status(401).json({message:"Not authorized"});
+        }
+        const decoded = jwt.verify(token,process.env.JWT_SECRET_KEY);
+        const userId = decoded.id;
+        const {name,email,password} = req.body;
+        const updateData = {};
+        if(name) updateData.name = name;
+        if(email) updateData.email = email;
+        if(password){
+            if(password.length<6){
+                return res.status(400).json({message:"Password must be at least 6 characters"});
+            }
+            const salt = await bcrypt.genSalt(10);
+            const hashedpassword = await bcrypt.hash(password,salt);
+            updateData.password = hashedpassword;
+        }
+        const updatedUser = await User.findByIdAndUpdate(userId,updateData,{new:true}).select('-password');
+        if(!updatedUser){
+            res.status(500).json({"message":"Internal Server Error - Cannot update user"});
+        }
+    }catch(err){
+        res.status(401).json({message:"Not authorized, token failed"});
+    }
+}

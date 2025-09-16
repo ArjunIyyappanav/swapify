@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {signup,login,logout,checkAuth, searchUsers, getPublicUser, updateSkills, deleteUser} from "../controllers/auth.controller.js";
+import {signup,login,logout,checkAuth, searchUsers, getPublicUser, updateSkills, deleteUser,updateUser} from "../controllers/auth.controller.js";
 import {protectRoute} from '../middleware/auth.middleware.js'
 
 const authrouter = Router();
@@ -12,5 +12,6 @@ authrouter.put('/auth/updateSkills',protectRoute,updateSkills);
 authrouter.get('/users/search', protectRoute, searchUsers);
 authrouter.get('/users/:name', protectRoute, getPublicUser);
 authrouter.delete('/auth/account',deleteUser);
+authrouter.patch('/auth/updateProfile',updateUser);
 
 export default authrouter;

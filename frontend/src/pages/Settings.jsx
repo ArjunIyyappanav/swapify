@@ -80,7 +80,6 @@ export default function Settings() {
     try {
       // --- API CALL ---
       await axios.delete("/auth/account", { withCredentials: true });
-      // On successful deletion, log out and redirect
       navigate("/login", { state: { successMessage: "Account deleted successfully." } });
     } catch (error) {
       console.error("Failed to delete account", error);
