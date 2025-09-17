@@ -18,14 +18,20 @@ const Classes = () => {
     fetch();
   }, []);
 
-  // async function enroll() {
-  //   try {
-  //     const response = await axios.post("/auth/enroll", { classId: classes[0]._id}, { withCredentials: true });  
-  //   } catch (error) {
-  //     console.error("Error enrolling in class:", error);  
-  //   }
-  // }
+  async function enroll() {
+    try {
+      const response = await axios.post("/auth/enroll", { classId: classes[0]._id}, { withCredentials: true });  
+      if (response.status === 200) {
+        alert("Enrolled successfully!");
+      }   
+    } catch (error) {
+      console.error("Error enrolling in class:", error);  
+    }
+  }
 
+  function navigate(id) {
+    navigate(`/class/:${id}`);
+  }
 
   return (
     <div style={{ padding: "20px" }}>
@@ -45,20 +51,33 @@ const Classes = () => {
             <h2>{cls.name}</h2>
             <p>{cls.description}</p>
             <p>Members: {cls.members?.length || 0}</p>
-            {/* <button
-        onClick={enroll}
-        style={{
-          marginTop: "20px",
-          padding: "10px 15px",
-          borderRadius: "8px",
-          backgroundColor: "#4CAF50",
-          color: "white",
-          border: "none",
-          cursor: "pointer",
-        }}
-      >
-        Enroll
-      </button> */}
+            <button
+                key={cls._id}
+                onClick={enroll}
+                style={{
+                marginTop: "20px",
+                padding: "10px 15px",
+                borderRadius: "8px",
+                backgroundColor: "#4CAF50",
+                color: "white",
+                border: "none",
+                cursor: "pointer",
+              }}  
+            >Enroll</button>
+            <button
+                key={cls._id}
+                onClick={navigate(cls._id)}
+                style={{
+                marginTop: "20px",
+                marginLeft: "10px",
+                padding: "10px 15px",
+                borderRadius: "8px",
+                backgroundColor: "#4CAF50",
+                color: "white",
+                border: "none",
+                cursor: "pointer",
+                }}
+            >View</button>
           </div>
         ))
       ) : (

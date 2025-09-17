@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "../utils/api";
 import { Mail, Sparkles, Lightbulb } from "lucide-react";
 
-// --- Reusable Spinner Component ---
 const Spinner = () => (
   <div className="flex flex-col items-center justify-center p-10">
     <svg className="animate-spin h-8 w-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

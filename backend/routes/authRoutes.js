@@ -13,7 +13,6 @@ authrouter.put('/auth/updateSkills',protectRoute,updateSkills);
 authrouter.get('/users/search', protectRoute, searchUsers);
 authrouter.get('/users/:name', protectRoute, getPublicUser);
 authrouter.get('/auth/classes', protectRoute,classes);
-// authrouter.post('/auth/createclasses',protectRoute,createClass);
 authrouter.post('/auth/enroll',protectRoute,enroll);
 authrouter.delete('/auth/account',deleteUser);
 authrouter.patch('/auth/updateProfile',updateUser);

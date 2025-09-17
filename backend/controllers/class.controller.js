@@ -28,20 +28,16 @@ export async function enroll(req,res){
     }catch(err){
         return res.status(500).json({message:"Server error"});
     }
-}   
-
-// export async function createClass(req,res){
-//     const {name,description} = req.body;      
-//     console.log(name,description);      
-//     try{
-//         const existingClass = await Class.findOne({name});  
-//         if(existingClass){
-//             return res.status(400).json({message:"Class with this name already exists"});
-//         }   
-//         const newClass = new Class({name,description});
-//         await newClass.save();
-//         return res.status(201).json({message:"Class created successfully", class:newClass});
-//     }catch(err){
-//         return res.status(500).json({message:"Server error"});
-//     }
-// }
+} 
+export const showmembers = async (req, res) => {
+    const { classId } = req.params;
+    try{
+        const classObj = await Class.findById(classId).populate('members', 'name email skills');
+        if(!classObj){
+            return res.status(404).json({message:"Class not found"});
+        }   
+        return res.status(200).json(classObj.members);
+    }catch(err){
+        return res.status(500).json({message:"Server error"});  
+    }
+}  
