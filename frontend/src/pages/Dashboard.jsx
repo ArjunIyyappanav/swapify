@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion"; // Added import
 import {
   Menu,
   X,
@@ -15,7 +16,7 @@ import {
 import axios from "../utils/api";
 import { useNavigate, useLocation } from "react-router-dom";
 
-// --- Helper function for relative time ---
+// --- Helper function for relative time (No changes) ---
 function formatDistanceToNow(dateString) {
   const date = new Date(dateString);
   const now = new Date();
@@ -31,10 +32,9 @@ function formatDistanceToNow(dateString) {
 }
 
 // --- Stat Card Component (No changes) ---
-const StatCard = ({ icon: Icon, title, value, colorClass, animationDelay }) => (
+const StatCard = ({ icon: Icon, title, value, colorClass }) => (
   <div 
-    className="bg-neutral-950 border border-neutral-800 shadow-lg rounded-xl p-6 flex items-center gap-6 transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-black/20"
-    style={{ animation: `fade-in-up 0.5s ${animationDelay}s ease-out forwards`, opacity: 0 }}
+    className="bg-neutral-950 border border-neutral-800 shadow-lg rounded-xl p-6 flex items-center gap-6"
   >
     <div className={`p-3 rounded-lg bg-neutral-800 ${colorClass}`}>
       <Icon className="w-8 h-8" />
@@ -46,7 +46,7 @@ const StatCard = ({ icon: Icon, title, value, colorClass, animationDelay }) => (
   </div>
 );
 
-// --- Activity Item Component ---
+// --- Activity Item Component (No changes) ---
 const ActivityItem = ({ activity }) => {
     let icon, message;
 
@@ -79,6 +79,19 @@ const ActivityItem = ({ activity }) => {
     );
 };
 
+// --- Animation Variants ---
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 100 } },
+};
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -112,7 +125,7 @@ export default function Dashboard() {
 
         const sortedActivity = combinedRequests
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .slice(0, 5); // Get latest 5 activities
+            .slice(0, 5);
         
         const formattedActivity = sortedActivity.map(item => ({
             id: item._id,
@@ -142,21 +155,69 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-neutral-900 text-neutral-200 font-sans">
       
-      {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/60 z-30 md:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed inset-y-0 left-0 z-40 w-64 bg-neutral-950 border-r border-neutral-800 shadow-lg"
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
+                <h1 className="text-2xl font-bold tracking-tight text-white">Swapify</h1>
+                <button className="md:hidden p-1" onClick={() => setSidebarOpen(false)}><X className="w-6 h-6" /></button>
+              </div>
+              <nav className="mt-6 px-4 space-y-2">
+                {navigation.map((item) => {
+                  const isActive = location.pathname === item.to;
+                  return (
+                    <motion.button
+                      key={item.name}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => { navigate(item.to); setSidebarOpen(false); }}
+                      className={`w-full flex items-center px-4 py-3 rounded-lg font-semibold transition-colors duration-200 ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100'}`}
+                    >
+                      <item.icon className="w-5 h-5 mr-4" />
+                      <span>{item.name}</span>
+                    </motion.button>
+                  );
+                })}
+              </nav>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-neutral-950 border-r border-neutral-800 shadow-lg transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
+      <aside className={`fixed inset-y-0 left-0 z-20 w-64 bg-neutral-950 border-r border-neutral-800 shadow-lg hidden md:block`}>
+        {/* Static Desktop Sidebar Content */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
           <h1 className="text-2xl font-bold tracking-tight text-white">Swapify</h1>
-          <button className="md:hidden p-1" onClick={() => setSidebarOpen(false)}><X className="w-6 h-6" /></button>
         </div>
         <nav className="mt-6 px-4 space-y-2">
           {navigation.map((item) => {
             const isActive = location.pathname === item.to;
             return (
-              <button key={item.name} onClick={() => { navigate(item.to); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-3 rounded-lg font-semibold transition-colors duration-200 ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100'}`}>
+              <motion.button
+                key={item.name}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate(item.to)}
+                className={`w-full flex items-center px-4 py-3 rounded-lg font-semibold transition-colors duration-200 ${isActive ? 'bg-indigo-600 text-white shadow-md' : 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100'}`}
+              >
                 <item.icon className="w-5 h-5 mr-4" />
                 <span>{item.name}</span>
-              </button>
+              </motion.button>
             );
           })}
         </nav>
@@ -166,33 +227,59 @@ export default function Dashboard() {
         <header className="flex items-center justify-between p-4 md:p-6 border-b border-neutral-800">
             <button className="md:hidden p-2 rounded-lg bg-neutral-800/50" onClick={() => setSidebarOpen(true)}><Menu className="w-6 h-6" /></button>
             <div className="flex-1" />
-            <button onClick={() => navigate('/create-request')} className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-neutral-900 focus:ring-indigo-500 transition-colors">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/create-request')}
+              className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-neutral-900 focus:ring-indigo-500 transition-colors"
+            >
               Create Request
-            </button>
+            </motion.button>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <motion.main
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex-1 overflow-y-auto p-4 md:p-6"
+        >
           <div className="max-w-7xl mx-auto">
-            <h2 className="text-3xl font-bold tracking-tight mb-6">{displayName} 👋</h2>
+            <motion.h2 variants={itemVariants} className="text-3xl font-bold tracking-tight mb-6">{displayName} 👋</motion.h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              <StatCard icon={Layers} title="Skills Listed" value={stats.skillsListed} colorClass="text-sky-400" animationDelay={0.1} />
-              <StatCard icon={Repeat} title="Swap Requests" value={stats.swapRequests} colorClass="text-amber-400" animationDelay={0.2} />
-              <StatCard icon={CheckCircle} title="Successful Matches" value={stats.successfulMatches} colorClass="text-emerald-400" animationDelay={0.3} />
-            </div>
+            <motion.div
+              variants={containerVariants}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
+            >
+              <motion.div variants={itemVariants} whileHover={{ y: -5 }}>
+                <StatCard icon={Layers} title="Skills Listed" value={stats.skillsListed} colorClass="text-sky-400" />
+              </motion.div>
+              <motion.div variants={itemVariants} whileHover={{ y: -5 }}>
+                <StatCard icon={Repeat} title="Swap Requests" value={stats.swapRequests} colorClass="text-amber-400" />
+              </motion.div>
+              <motion.div variants={itemVariants} whileHover={{ y: -5 }}>
+                <StatCard icon={CheckCircle} title="Successful Matches" value={stats.successfulMatches} colorClass="text-emerald-400" />
+              </motion.div>
+            </motion.div>
 
-            <div className="bg-neutral-950 border border-neutral-800 shadow-lg rounded-xl p-6" style={{ animation: `fade-in-up 0.5s 0.4s ease-out forwards`, opacity: 0 }}>
+            <motion.div
+              variants={itemVariants}
+              className="bg-neutral-950 border border-neutral-800 shadow-lg rounded-xl p-6"
+            >
               <h3 className="text-xl font-semibold mb-4">Recent Activity</h3>
-              <div className="space-y-4">
+              <motion.div variants={containerVariants} className="space-y-4">
                 {recentActivity.length > 0 ? (
-                    recentActivity.map(activity => <ActivityItem key={activity.id} activity={activity} />)
+                  recentActivity.map(activity => (
+                    <motion.div key={activity.id} variants={itemVariants}>
+                      <ActivityItem activity={activity} />
+                    </motion.div>
+                  ))
                 ) : (
-                    <p className="text-neutral-500 text-center py-4">No recent activity to show.</p>
+                  <p className="text-neutral-500 text-center py-4">No recent activity to show.</p>
                 )}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
-        </main>
+        </motion.main>
       </div>
     </div>
   );

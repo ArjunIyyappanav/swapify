@@ -15,10 +15,12 @@ import Chat from "./pages/Chat";
 import Search from "./pages/Search";
 import ProfileView from "./pages/ProfileView";
 import Classes from "./pages/Classes";
+import Members from "./pages/members"
 
 export default function Root() {
   return (
     <div className="min-h-screen bg-gray-950">
+      {/* <TravelInSpace className="space-background" /> */}
       <Navbar />
       <Routes>
         <Route path="/" element={
@@ -31,6 +33,7 @@ export default function Root() {
         <Route path="/login" element={<Login />} />
         <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
         <Route path="/users/:name" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
+        <Route path="/auth/:id" element={<ProtectedRoute><Members /></ProtectedRoute>} />
 
         <Route path='/classes' element={
           <ProtectedRoute>

@@ -1,6 +1,6 @@
 import {Router} from "express";
 import {signup,login,logout,checkAuth, searchUsers, getPublicUser, updateSkills, deleteUser,updateUser} from "../controllers/auth.controller.js";
-import {enroll,classes} from "../controllers/class.controller.js";
+import {enroll,classes,showmembers} from "../controllers/class.controller.js";
 import {protectRoute} from '../middleware/auth.middleware.js'
 
 const authrouter = Router();
@@ -16,5 +16,6 @@ authrouter.get('/auth/classes', protectRoute,classes);
 authrouter.post('/auth/enroll',protectRoute,enroll);
 authrouter.delete('/auth/account',deleteUser);
 authrouter.patch('/auth/updateProfile',updateUser);
+authrouter.get('/auth/:id',showmembers)
 
 export default authrouter;

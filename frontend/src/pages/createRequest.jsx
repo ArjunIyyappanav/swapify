@@ -49,8 +49,7 @@ export default function CreateRequest() {
             <h1 className="text-3xl font-bold tracking-tight">Create a Swap Request</h1>
             <p className="text-neutral-400 mt-2">Enter the details below to initiate a skill swap.</p>
           </div>
-          
-          {/* Form Fields */}
+ 
           <div className="space-y-5">
             <div>
               <label htmlFor="fromUser" className="block text-sm font-medium text-neutral-300 mb-2">Your User ID</label>

@@ -1,7 +1,10 @@
-import {React,useEffect,useState} from 'react'
+import { React, useEffect, useState } from 'react';
 import axios from '../utils/api';
+import { useNavigate } from 'react-router-dom';
+
 const Classes = () => {
   const [classes, setClasses] = useState([]);
+  const navigate = useNavigate(); // ✅ from react-router
 
   useEffect(() => {
     const fetch = async () => {
@@ -18,19 +21,19 @@ const Classes = () => {
     fetch();
   }, []);
 
-  async function enroll() {
+  async function enroll(id) {
     try {
-      const response = await axios.post("/auth/enroll", { classId: classes[0]._id}, { withCredentials: true });  
+      const response = await axios.post(
+        "/auth/enroll",
+        { classId: id },
+        { withCredentials: true }
+      );
       if (response.status === 200) {
         alert("Enrolled successfully!");
-      }   
+      }
     } catch (error) {
-      console.error("Error enrolling in class:", error);  
+      console.error("Error enrolling in class:", error);
     }
-  }
-
-  function navigate(id) {
-    navigate(`/class/:${id}`);
   }
 
   return (
@@ -51,10 +54,10 @@ const Classes = () => {
             <h2>{cls.name}</h2>
             <p>{cls.description}</p>
             <p>Members: {cls.members?.length || 0}</p>
+
             <button
-                key={cls._id}
-                onClick={enroll}
-                style={{
+              onClick={() => enroll(cls._id)} // ✅ pass correct ID
+              style={{
                 marginTop: "20px",
                 padding: "10px 15px",
                 borderRadius: "8px",
@@ -62,12 +65,14 @@ const Classes = () => {
                 color: "white",
                 border: "none",
                 cursor: "pointer",
-              }}  
-            >Enroll</button>
+              }}
+            >
+              Enroll
+            </button>
+
             <button
-                key={cls._id}
-                onClick={navigate(cls._id)}
-                style={{
+              onClick={() => navigate(`/auth/${cls._id}`)} // ✅ fixed navigation
+              style={{
                 marginTop: "20px",
                 marginLeft: "10px",
                 padding: "10px 15px",
@@ -76,15 +81,15 @@ const Classes = () => {
                 color: "white",
                 border: "none",
                 cursor: "pointer",
-                }}
-            >View</button>
+              }}
+            >
+              View
+            </button>
           </div>
         ))
       ) : (
         <p>No classes available.</p>
       )}
-
-      
     </div>
   );
 };

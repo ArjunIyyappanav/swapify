@@ -7,15 +7,15 @@ config();
 
 
 export const signup = async(req,res)=>{
-    const {name,email,password,skills_offered,skills_wanted} = req.body;
+    let {name,email,password,skills_offered,skills_wanted} = req.body;
     try{
         if(!name||!email||!password){
             return res.status(400).json({message:"Please provide all the fields"});
         }
-        name=name.trim();
+        name=name.trim();   
         email=email.trim().toLowerCase();
-        skills_offered=skills_offered?skills_offered.trim():"";
-        skills_wanted=skills_wanted?skills_wanted.trim():"";    
+        // skills_offered=skills_offered?skills_offered.trim():"";
+        // skills_wanted=skills_wanted?skills_wanted.trim():"";    
         if(!/^[^\s@]+@vitstudent\.ac\.in$/i.test(email)){
             return res.status(400).json({message:"Only @vitstudent.ac.in emails are allowed"});
         }

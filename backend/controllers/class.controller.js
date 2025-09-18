@@ -1,4 +1,5 @@
 import Class from '../models/classes.js'
+import User from '../models/Users.js'
 
 export async function classes(req,res){
     try{
@@ -30,9 +31,11 @@ export async function enroll(req,res){
     }
 } 
 export const showmembers = async (req, res) => {
-    const { classId } = req.params;
+    const { id } = req.params;
+    console.log(id);
     try{
-        const classObj = await Class.findById(classId).populate('members', 'name email skills');
+        const classObj = await Class.findById(id).populate('members', 'name email skills');
+        console.log(classObj);
         if(!classObj){
             return res.status(404).json({message:"Class not found"});
         }   
