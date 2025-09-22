@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion"; // Added import
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu,
   X,
@@ -11,12 +11,12 @@ import {
   Settings,
   CheckCircle,
   Send, 
-  Inbox, 
+  Inbox,
+  ShieldHalf 
 } from "lucide-react";
 import axios from "../utils/api";
 import { useNavigate, useLocation } from "react-router-dom";
 
-// --- Helper function for relative time (No changes) ---
 function formatDistanceToNow(dateString) {
   const date = new Date(dateString);
   const now = new Date();
@@ -31,7 +31,6 @@ function formatDistanceToNow(dateString) {
   return `${days} days ago`;
 }
 
-// --- Stat Card Component (No changes) ---
 const StatCard = ({ icon: Icon, title, value, colorClass }) => (
   <div 
     className="bg-neutral-950 border border-neutral-800 shadow-lg rounded-xl p-6 flex items-center gap-6"
@@ -46,7 +45,6 @@ const StatCard = ({ icon: Icon, title, value, colorClass }) => (
   </div>
 );
 
-// --- Activity Item Component (No changes) ---
 const ActivityItem = ({ activity }) => {
     let icon, message;
 
@@ -148,6 +146,7 @@ export default function Dashboard() {
     { name: "My Skills", icon: Layers, to: "/my-skills" },
     { name: "Classes", icon: DraftingCompass, to: "/classes"},
     { name: "Swap Requests", icon: Repeat, to: "/swap-requests" },
+    { name: "Team Requests", icon: ShieldHalf , to: "/teams" },
     { name: "Profile", icon: User, to: "/profile" },
     { name: "Settings", icon: Settings, to: "/settings" },
   ];
@@ -227,14 +226,14 @@ export default function Dashboard() {
         <header className="flex items-center justify-between p-4 md:p-6 border-b border-neutral-800">
             <button className="md:hidden p-2 rounded-lg bg-neutral-800/50" onClick={() => setSidebarOpen(true)}><Menu className="w-6 h-6" /></button>
             <div className="flex-1" />
-            <motion.button
+            {/* <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/create-request')}
               className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-neutral-900 focus:ring-indigo-500 transition-colors"
             >
               Create Request
-            </motion.button>
+            </motion.button> */}
         </header>
 
         <motion.main

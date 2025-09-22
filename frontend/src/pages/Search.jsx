@@ -148,7 +148,7 @@ export default function Search() {
                     </div>
                 </div>
                  <div className="flex-shrink-0 flex items-center gap-2">
-                    <button onClick={() => navigate(`/users/${u.name}`)} className="px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 rounded-md font-semibold transition-colors flex items-center gap-2"><User size={14}/> Profile</button>
+                    <button onClick={() => navigate(`/team/create`)} className="px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 rounded-md font-semibold transition-colors flex items-center gap-2"><User size={14}/> Team Request</button>
                     <button onClick={() => handleSendRequest(u)} className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors flex items-center gap-2"><Send size={14}/> Propose Swap</button>
                 </div>
             </div>

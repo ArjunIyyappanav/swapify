@@ -9,9 +9,7 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const dropdownRef = useRef(null); // Ref for the dropdown menu
-
-  // --- Data Fetching and Event Listeners (No changes needed here) ---
+  const dropdownRef = useRef(null);
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -132,8 +130,7 @@ export default function Navbar() {
               {user?.name || 'Account'}
             </span>
           </button>
-          
-          {/* Dropdown Menu with Animation */}
+
           <div
             className={`absolute right-0 top-full mt-2 w-56 origin-top-right bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl shadow-black/30 p-2
                        transition-all duration-200 ease-out

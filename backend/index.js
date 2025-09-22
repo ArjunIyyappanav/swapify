@@ -11,6 +11,7 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import Match from './models/match.js';
 import Message from './models/message.js';
+import teamrouter from './routes/teamRoutes.js';
 
 
 dotenv.config()
@@ -24,13 +25,14 @@ console.log(process.env.FRONTEND_ORIGIN,process.env.PORT,process.env.MONGODB_URI
 app.use('/api',authrouter);
 app.use('/api',requestsrouter);
 app.use('/api',chatRouter);
+app.use('/api',teamrouter)
 
 const server = http.createServer(app);
 const io = new Server(server, { 
   cors: { origin: process.env.FRONTEND_ORIGIN, credentials: true }
 });
 
-// Expose io to routes/controllers
+
 app.set('io', io);
 
 function parseCookie(cookieHeader) {
