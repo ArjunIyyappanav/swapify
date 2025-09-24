@@ -4,7 +4,7 @@ import Match from "../models/match.js";
 
 export const createTeamRequest = async (req, res) => {
     try {
-        const { toUsername, status, description, createdAt } = req.body;
+        const { toUsername, status, description} = req.body;
 
         if(!toUsername){
             return res.status(400).json({message:"toUsername is required"});
@@ -25,7 +25,6 @@ export const createTeamRequest = async (req, res) => {
             toUser: toUserDoc._id,
             status: status || 'pending',
             description,
-            createdAt
         });
         await newTeam.save();
         return res.status(201).json(newTeam);    

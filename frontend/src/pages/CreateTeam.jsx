@@ -1,5 +1,6 @@
 import { React, useState } from 'react';
 import axios from '../utils/api';
+import {useParams} from 'react-router-dom';
 import { Send, CheckCircle, XCircle } from 'lucide-react';
 
 const Spinner = () => (
@@ -34,6 +35,7 @@ const CreateTeam = () => {
     const [description, setDescription] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [notification, setNotification] = useState({ show: false, message: "", type: "" });
+    const {name} = useParams();
 
     const handleSubmit = async (e) => {
         e.preventDefault(); 
@@ -41,7 +43,7 @@ const CreateTeam = () => {
 
         setIsSubmitting(true);
         try {
-            const response = await axios.post("/team/create",{"description":description});
+            const response = await axios.post("/team/create",{"toUsername":name,"description":description,"status":"pending"});
             if(!response) console.log("Error in creating a team request");
             console.log("Team request sent with description:", description);
             setNotification({ show: true, message: "Team request created successfully!", type: "success" });
