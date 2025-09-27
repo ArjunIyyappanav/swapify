@@ -5,7 +5,9 @@ const matchSchema = new Schema({
     user2: {type: Schema.Types.ObjectId, ref: 'User', required: true},
     skillfromuser1: {type: String, required: true},
     skillfromuser2: {type: String, required: true},
-    status: {type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending'},
+    status: {type: String, enum: ['pending', 'accepted', 'rejected', 'ended'], default: 'pending'},
+    endedAt: {type: Date},
+    endedBy: {type: Schema.Types.ObjectId, ref: 'User'},
     createdAt: {type: Date, default: Date.now}
 }, {timestamps: true});
 

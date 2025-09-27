@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../utils/api";
-import { Mail, Sparkles, Lightbulb, Send, UserX } from "lucide-react";
+import { Mail, Sparkles, Lightbulb, Send, UserX, Star } from "lucide-react";
 
 // --- Reusable Spinner Component ---
 const Spinner = () => (
@@ -19,13 +19,19 @@ export default function ProfileView() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userRating, setUserRating] = useState(null);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const { data } = await axios.get(`/users/${name}`, { withCredentials: true });
-        setUser(data);
+        const [userRes, ratingRes] = await Promise.all([
+          axios.get(`/users/${name}`, { withCredentials: true }),
+          axios.get(`/rating/user/${encodeURIComponent(name)}`, { withCredentials: true })
+            .catch(() => ({ data: { averageRating: 0, totalRatings: 0 } }))
+        ]);
+        setUser(userRes.data);
+        setUserRating(ratingRes.data);
       } catch (e) {
         console.error(e);
       } finally {
@@ -70,9 +76,18 @@ export default function ProfileView() {
         </div>
         <div className="flex-1">
           <h1 className="text-4xl font-bold tracking-tight">{user.name}</h1>
-          <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-neutral-400">
-            <Mail className="w-4 h-4" />
-            <span>{user.email}</span>
+          <div className="flex flex-col gap-2 mt-3">
+            <div className="flex items-center justify-center md:justify-start gap-2 text-neutral-400">
+              <Mail className="w-4 h-4" />
+              <span>{user.email}</span>
+            </div>
+            {userRating && userRating.totalRatings > 0 && (
+              <div className="flex items-center justify-center md:justify-start gap-2 text-yellow-400">
+                <Star className="w-4 h-4 fill-current" />
+                <span className="font-semibold">{userRating.averageRating}</span>
+                <span className="text-neutral-400">({userRating.totalRatings} reviews)</span>
+              </div>
+            )}
           </div>
         </div>
         <button

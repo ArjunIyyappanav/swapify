@@ -1,7 +1,8 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { navigation } from "./utils/navigation";
 import Navbar from "./components/NavBar";
 import Landing from "./pages/Landing";
@@ -24,33 +25,39 @@ import Classes from "./pages/Classes";
 import Members from "./pages/members";
 import TeamRequests from "./pages/TeamRequests";
 import CreateTeam from "./pages/CreateTeam";
+import Teams from "./pages/teams";
 import axios from "./utils/api";
+import { loginSuccess, logout } from "./redux/authSlice";
 import "./App.css";
 
 export default function Root() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await axios.get("/auth/checkAuth", { withCredentials: true });
-        setIsAuthenticated(true);
+        const response = await axios.get("/auth/checkAuth", { withCredentials: true });
+        dispatch(loginSuccess(response.data));
       } catch (err) {
-        setIsAuthenticated(false);
+        dispatch(logout());
       } finally {
         setLoading(false);
       }
     };
     checkAuth();
-  }, []);
+  }, [dispatch]);
 
   const handleLogout = async () => {
     try {
       await axios.post("/auth/logout", {}, { withCredentials: true });
-      setIsAuthenticated(false);
-      window.location.href = "/login";
+      dispatch(logout());
+      navigate("/");
     } catch (err) {
       console.error("Logout failed", err);
       alert("Logout failed. Please try again.");
@@ -63,7 +70,7 @@ export default function Root() {
     </div>;
   }
 
-  const isPublicRoute = ["/", "/signup", "/login"].includes(window.location.pathname);
+  const isPublicRoute = ["/", "/signup", "/login"].includes(location.pathname);
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-200 font-sans antialiased">
@@ -77,9 +84,9 @@ export default function Root() {
                 key={item.name}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                onClick={() => (window.location.href = item.to)}
+                onClick={() => navigate(item.to)}
                 className={`w-full flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  window.location.pathname === item.to
+                  location.pathname === item.to
                     ? "bg-red-500 text-white shadow-md"
                     : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
                 }`}
@@ -136,11 +143,11 @@ export default function Root() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => {
-                      window.location.href = item.to;
+                      navigate(item.to);
                       setSidebarOpen(false);
                     }}
                     className={`w-full flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                      window.location.pathname === item.to
+                      location.pathname === item.to
                         ? "bg-red-500 text-white shadow-md"
                         : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
                     }`}
@@ -175,9 +182,9 @@ export default function Root() {
               <motion.button
                 key={item.name}
                 whileTap={{ scale: 0.9 }}
-                onClick={() => item.name === "Logout" ? handleLogout() : (window.location.href = item.to)}
+                onClick={() => item.name === "Logout" ? handleLogout() : navigate(item.to)}
                 className={`flex flex-col items-center p-2 ${
-                  window.location.pathname === item.to ? "text-red-500" : "text-neutral-400"
+                  location.pathname === item.to ? "text-red-500" : "text-neutral-400"
                 }`}
               >
                 <item.icon className="w-6 h-6" />
@@ -189,18 +196,22 @@ export default function Root() {
       )}
 
       {/* Main Content */}
-      <div className={`pt-16 ${isAuthenticated && !isPublicRoute ? "md:ml-72" : ""} min-h-screen`}>
+      <div className={`pt-16 ${isAuthenticated && !isPublicRoute ? "md:ml-72 pb-16 md:pb-0" : ""} min-h-screen`}>
         {isAuthenticated && !isPublicRoute && (
-          <header className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5 bg-neutral-900/95 sticky top-16 z-10 md:hidden">
+          <header className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 bg-neutral-900/95 backdrop-blur-sm sticky top-16 z-10 md:hidden border-b border-neutral-800">
             <button
               className="p-2 rounded-lg bg-neutral-800/50 hover:bg-neutral-700/70 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-neutral-900 transition-colors"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="w-6 h-6 text-neutral-300" />
             </button>
+            <h2 className="text-lg font-semibold text-white">
+              {navigation.find(item => item.to === location.pathname)?.name || 'Swapify'}
+            </h2>
+            <div className="w-10"></div> {/* Spacer for centering */}
           </header>
         )}
-        <main className="p-4 sm:p-6 md:p-8">
+        <main className="p-3 sm:p-4 md:p-6 lg:p-8">
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/signup" element={<Signup />} />
@@ -208,7 +219,7 @@ export default function Root() {
             <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
             <Route path="/users/:name" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
             <Route path="/auth/:id" element={<ProtectedRoute><Members /></ProtectedRoute>} />
-            <Route path="/teams" element={<ProtectedRoute><TeamRequests /></ProtectedRoute>} />
+            <Route path="/teams" element={<ProtectedRoute><Teams /></ProtectedRoute>} />
             <Route path="/team/create/:name" element={<ProtectedRoute><CreateTeam /></ProtectedRoute>} />
             <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

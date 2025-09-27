@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "../utils/api";
-import { Search as SearchIcon, X, Sparkles, Lightbulb, User, Send, SearchX, AlertTriangle } from "lucide-react";
+import { Search as SearchIcon, X, Sparkles, Lightbulb, User, Send, SearchX, AlertTriangle, Star } from "lucide-react";
 
 // --- Reusable Components for this page ---
 const Spinner = ({ text })  => (
@@ -36,6 +36,7 @@ export default function Search() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [requestLoading, setRequestLoading] = useState(false);
+  const [userRatings, setUserRatings] = useState({});
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [requestData, setRequestData] = useState({ skillOffered: "", skillRequested: "" });
@@ -64,7 +65,23 @@ export default function Search() {
       setError("");
       try {
         const { data } = await axios.get(`/users/search`, { params: { q: query }, withCredentials: true });
-        setResults(data || [])
+        setResults(data || []);
+        
+        // Load ratings for each user
+        if (data && data.length > 0) {
+          const ratingsPromises = data.map(user => 
+            axios.get(`/rating/user/${user._id}`, { withCredentials: true })
+              .then(res => ({ userId: user._id, ...res.data }))
+              .catch(() => ({ userId: user._id, averageRating: 0, totalRatings: 0 }))
+          );
+          
+          const ratingsResults = await Promise.all(ratingsPromises);
+          const ratingsMap = {};
+          ratingsResults.forEach(rating => {
+            ratingsMap[rating.userId] = rating;
+          });
+          setUserRatings(ratingsMap);
+        }
       } catch (e) {
         console.error(e);
         setResults([]);
@@ -144,7 +161,16 @@ export default function Search() {
                     </div>
                     <div className="min-w-0">
                         <button onClick={() => navigate(`/users/${u.name}`)} className="text-lg font-bold hover:underline truncate">{u.name}</button>
-                        <div className="text-sm text-neutral-400 truncate">{u.email}</div>
+                        <div className="flex items-center gap-2 text-sm text-neutral-400">
+                          <span className="truncate">{u.email}</span>
+                          {userRatings[u._id] && userRatings[u._id].totalRatings > 0 && (
+                            <div className="flex items-center gap-1 text-yellow-400">
+                              <Star size={12} className="fill-current" />
+                              <span>{userRatings[u._id].averageRating}</span>
+                              <span className="text-neutral-500">({userRatings[u._id].totalRatings})</span>
+                            </div>
+                          )}
+                        </div>
                     </div>
                 </div>
                  <div className="flex-shrink-0 flex items-center gap-2">

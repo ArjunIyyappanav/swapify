@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "../utils/api";
 import { io } from "socket.io-client";
+import { motion, AnimatePresence } from "framer-motion";
 
 // --- SVG Icon Components for a cleaner UI ---
 
@@ -23,6 +24,24 @@ const XMarkIcon = ({ className = "w-6 h-6" }) => (
     </svg>
 );
 
+const BlockIcon = ({ className = "w-6 h-6" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+  </svg>
+);
+
+const EndChatIcon = ({ className = "w-6 h-6" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9" />
+  </svg>
+);
+
+const StarIcon = ({ className = "w-6 h-6" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+  </svg>
+);
+
 
 export default function Chat() {
   const [matches, setMatches] = useState([]);
@@ -32,6 +51,13 @@ export default function Chat() {
   const [showMeetInput, setShowMeetInput] = useState(false);
   const [meetUrl, setMeetUrl] = useState("");
   const [me, setMe] = useState(null);
+  const [showEndChatModal, setShowEndChatModal] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [endingChat, setEndingChat] = useState(false);
+  const [blocking, setBlocking] = useState(false);
+  const [rating, setRating] = useState({ stars: 5, review: '', skillRated: '' });
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const socketRef = useRef(null);
   const activeRef = useRef(null);
   const bottomRef = useRef(null);
@@ -85,6 +111,93 @@ export default function Chat() {
   const handleStartMeet = () => {
     window.open('https://meet.new', '_blank', 'noopener');
     setShowMeetInput(true);
+  };
+  
+  const handleEndChat = async () => {
+    if (!active) return;
+    
+    setEndingChat(true);
+    try {
+      const response = await axios.post(`/chat/${active._id}/end`, {}, { withCredentials: true });
+      
+      setNotification({ show: true, message: 'Chat ended successfully', type: 'success' });
+      setShowEndChatModal(false);
+      
+      // If rating is needed, show rating modal
+      if (response.data.needsRating) {
+        const otherUser = String(active.user1._id) === String(me._id) ? active.user2 : active.user1;
+        const skillToRate = String(active.user1._id) === String(me._id) ? active.skillfromuser2 : active.skillfromuser1;
+        setRating({ ...rating, skillRated: skillToRate });
+        setShowRatingModal(true);
+      }
+      
+      // Refresh matches
+      loadMatches();
+      setActive(null);
+    } catch (error) {
+      console.error('Error ending chat:', error);
+      setNotification({ 
+        show: true, 
+        message: error.response?.data?.message || 'Failed to end chat', 
+        type: 'error' 
+      });
+    } finally {
+      setEndingChat(false);
+    }
+  };
+  
+  const handleBlockUser = async () => {
+    if (!active) return;
+    
+    const otherUser = String(active.user1._id) === String(me._id) ? active.user2 : active.user1;
+    
+    setBlocking(true);
+    try {
+      await axios.post('/block', {
+        blockedUserId: otherUser._id,
+        reason: 'Blocked from chat'
+      }, { withCredentials: true });
+      
+      setNotification({ show: true, message: `${otherUser.name} has been blocked`, type: 'success' });
+      setShowBlockModal(false);
+      
+      // Refresh matches and clear active chat
+      loadMatches();
+      setActive(null);
+    } catch (error) {
+      console.error('Error blocking user:', error);
+      setNotification({ 
+        show: true, 
+        message: error.response?.data?.message || 'Failed to block user', 
+        type: 'error' 
+      });
+    } finally {
+      setBlocking(false);
+    }
+  };
+  
+  const handleSubmitRating = async () => {
+    if (!active || !rating.stars || !rating.skillRated) return;
+    
+    try {
+      await axios.post('/rating', {
+        matchId: active._id,
+        rating: rating.stars,
+        review: rating.review,
+        skillRated: rating.skillRated
+      }, { withCredentials: true });
+      
+      setNotification({ show: true, message: 'Rating submitted successfully!', type: 'success' });
+      setShowRatingModal(false);
+      setRating({ stars: 5, review: '', skillRated: '' });
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      setNotification({ 
+        show: true, 
+        message: error.response?.data?.message || 'Failed to submit rating', 
+        type: 'error' 
+      });
+    }
   };
   const renderContent = (text) => {
     try {
@@ -181,13 +294,29 @@ export default function Chat() {
                         <p className="font-bold">{activeMatchUser?.name}</p>
                     </div>
                 </div>
-              <button 
-                onClick={handleStartMeet} 
-                className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded-full transition-colors"
-                aria-label="Start Google Meet"
-              >
-                <VideoCameraIcon />
-              </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={handleStartMeet} 
+                    className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded-full transition-colors"
+                    aria-label="Start Google Meet"
+                  >
+                    <VideoCameraIcon />
+                  </button>
+                  <button 
+                    onClick={() => setShowBlockModal(true)} 
+                    className="p-2 text-neutral-400 hover:text-red-400 hover:bg-neutral-700 rounded-full transition-colors"
+                    aria-label="Block User"
+                  >
+                    <BlockIcon className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => setShowEndChatModal(true)} 
+                    className="p-2 text-neutral-400 hover:text-orange-400 hover:bg-neutral-700 rounded-full transition-colors"
+                    aria-label="End Chat"
+                  >
+                    <EndChatIcon className="w-5 h-5" />
+                  </button>
+                </div>
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
@@ -243,6 +372,184 @@ export default function Chat() {
           </>
         )}
       </section>
+      
+      {/* Notification Toast */}
+      <AnimatePresence>
+        {notification.show && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className={`fixed bottom-5 right-5 p-4 rounded-lg shadow-lg text-white z-50 ${
+              notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+            }`}
+          >
+            {notification.message}
+            <button 
+              onClick={() => setNotification({ show: false, message: '', type: '' })}
+              className="ml-3 hover:opacity-70"
+            >
+              <XMarkIcon className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* End Chat Modal */}
+      <AnimatePresence>
+        {showEndChatModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowEndChatModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-neutral-800 border border-neutral-700 rounded-xl p-6 w-full max-w-md"
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 className="text-xl font-bold text-white mb-4">End Chat</h3>
+              <p className="text-neutral-300 mb-6">Are you sure you want to end this chat with {activeMatchUser?.name}? This action cannot be undone.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowEndChatModal(false)}
+                  className="flex-1 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEndChat}
+                  disabled={endingChat}
+                  className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-800 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  {endingChat ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <EndChatIcon className="w-4 h-4" />
+                  )}
+                  {endingChat ? 'Ending...' : 'End Chat'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Block User Modal */}
+      <AnimatePresence>
+        {showBlockModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowBlockModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-neutral-800 border border-neutral-700 rounded-xl p-6 w-full max-w-md"
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 className="text-xl font-bold text-white mb-4">Block User</h3>
+              <p className="text-neutral-300 mb-6">Are you sure you want to block {activeMatchUser?.name}? You won't be able to send or receive messages from this user.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowBlockModal(false)}
+                  className="flex-1 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBlockUser}
+                  disabled={blocking}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  {blocking ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <BlockIcon className="w-4 h-4" />
+                  )}
+                  {blocking ? 'Blocking...' : 'Block User'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Rating Modal */}
+      <AnimatePresence>
+        {showRatingModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-neutral-800 border border-neutral-700 rounded-xl p-6 w-full max-w-md"
+            >
+              <h3 className="text-xl font-bold text-white mb-4">Rate Your Experience</h3>
+              <p className="text-neutral-300 mb-4">How was your skill exchange with {activeMatchUser?.name}?</p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-300 mb-2">Rating</label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        onClick={() => setRating({ ...rating, stars: star })}
+                        className={`p-1 transition-colors ${
+                          star <= rating.stars ? 'text-yellow-400' : 'text-neutral-500 hover:text-yellow-300'
+                        }`}
+                      >
+                        <StarIcon className="w-6 h-6 fill-current" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-neutral-300 mb-2">Review (Optional)</label>
+                  <textarea
+                    value={rating.review}
+                    onChange={e => setRating({ ...rating, review: e.target.value })}
+                    placeholder="Share your experience..."
+                    rows={3}
+                    className="w-full px-3 py-2 bg-neutral-700 border border-neutral-600 rounded-lg text-white placeholder-neutral-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                  />
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setShowRatingModal(false)}
+                    className="flex-1 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    onClick={handleSubmitRating}
+                    className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <StarIcon className="w-4 h-4" />
+                    Submit Rating
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

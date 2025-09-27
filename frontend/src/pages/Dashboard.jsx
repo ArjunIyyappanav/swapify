@@ -181,7 +181,7 @@ export default function Dashboard() {
         const hackathonsRes = await axios.get("/events", { withCredentials: true });
         setHackathons(hackathonsRes.data || []);
       } catch (err) {
-        setError("Failed to load dashboard data. Please try again.");
+        // setError("Failed to load dashboard data. Please try again.");
         console.error("Failed to load dashboard data", err);
       }
     };
