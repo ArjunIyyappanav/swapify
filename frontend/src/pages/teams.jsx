@@ -35,7 +35,7 @@ const StatusPill = ({ status }) => {
     return <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border capitalize ${styles[status] || ''}`}>{status}</span>;
 };
 
-const RequestCard = ({ req, type, onUpdateStatus, onOpenChat, updatingId }) => {
+const RequestCard = ({ req, type, onUpdateStatus, onOpenChat, onViewRequest, updatingId }) => {
     const otherParty = type === 'sent' ? (req.toTeam || req.toUser) : (req.fromTeam || req.fromUser);
     const isTeamRequest = !!(req.toTeam || req.fromTeam);
     const isPending = req.status === 'pending';
@@ -54,16 +54,17 @@ const RequestCard = ({ req, type, onUpdateStatus, onOpenChat, updatingId }) => {
                         {isTeamRequest && <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">Team</span>}
                         <StatusPill status={req.status} />
                     </div>
-                    <div className="text-sm text-neutral-400 mt-1 flex items-center gap-2">
-                        <span>{type === 'sent' ? 'You Offer:' : 'They Offer:'} <strong>{req.skillOffered}</strong></span>
-                        <ArrowRightLeft className="w-4 h-4 text-neutral-500 flex-shrink-0" />
-                        <span>{type === 'sent' ? 'You Want:' : 'You Give:'} <strong>{req.skillRequested}</strong></span>
-                    </div>
                 </div>
             </div>
             <div className="flex-shrink-0 flex items-center gap-2 self-end sm:self-center">
                 {type === 'received' && isPending && (
                     <>
+                        <button
+                            onClick={() => onViewRequest(req)}
+                            className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md font-semibold transition-colors flex items-center gap-2"
+                        >
+                            View
+                        </button>
                         <button disabled={isLoading} onClick={() => onUpdateStatus(req._id, 'rejected')} className="px-3 py-1.5 text-sm bg-red-900/50 hover:bg-red-900/80 text-red-300 rounded-md font-semibold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                             {isLoading ? <Spinner text="" /> : <X size={14} />} Reject
                         </button>
@@ -88,6 +89,7 @@ export default function TeamRequests() {
     const [loading, setLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState(null);
     const [notification, setNotification] = useState({ show: false, message: "" });
+    const [viewingRequest, setViewingRequest] = useState(null); // For modal
     const navigate = useNavigate();
 
     const refresh = async () => {
@@ -116,6 +118,10 @@ export default function TeamRequests() {
             console.error("Attempted to open chat for a request with no matchId:", request);
             setNotification({ show: true, message: "Could not find the associated chat." });
         }
+    };
+
+    const handleViewRequest = (req) => {
+        setViewingRequest(req);
     };
 
     const updateStatus = async (requestId, status) => {
@@ -148,6 +154,7 @@ export default function TeamRequests() {
                         type={type}
                         onUpdateStatus={updateStatus}
                         onOpenChat={handleOpenChat}
+                        onViewRequest={handleViewRequest}
                         updatingId={updatingId}
                     />
                 ))}
@@ -182,6 +189,22 @@ export default function TeamRequests() {
                     {renderRequestList(received, 'received')}
                 </section>
             </div>
+
+            {/* Modal for viewing request description */}
+            {viewingRequest && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-neutral-950 p-6 rounded-xl max-w-lg w-full">
+                        <h3 className="text-xl font-bold mb-4">{viewingRequest.fromTeam?.name || viewingRequest.fromUser?.name || "Team Request"}</h3>
+                        <p className="text-neutral-300 mb-6">{viewingRequest.description || "No description provided."}</p>
+                        <button
+                            onClick={() => setViewingRequest(null)}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
