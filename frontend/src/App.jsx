@@ -21,7 +21,7 @@ import Ratings from "./pages/Ratings";
 import Search from "./pages/Search";
 import ProfileView from "./pages/ProfileView";
 import Classes from "./pages/Classes";
-import Members from "./pages/Members";
+import Members from "./pages/members";
 import TeamRequests from "./pages/TeamRequests";
 import CreateTeam from "./pages/CreateTeam";
 import axios from "./utils/api";
