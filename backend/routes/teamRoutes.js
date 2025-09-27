@@ -1,8 +1,9 @@
 import {Router} from 'express';
 import {protectRoute} from '../middleware/auth.middleware.js'
-import { createTeamRequest,updateRequestStatus,getRequests,deleteRequest,checkPending,getMyRequests,getMyMatches } from '../controllers/team.controller.js';
+import { createTeamRequest,updateRequestStatus,getRequests,deleteRequest,checkPending,getMyRequests,getMyMatches, getAllTeams } from '../controllers/team.controller.js';
 const teamrouter = Router();
 
+teamrouter.get('/teams', protectRoute, getAllTeams);
 teamrouter.post('/team/create',protectRoute,createTeamRequest);
 teamrouter.get('/team/getteam/:id',protectRoute,getRequests);
 teamrouter.get('/team/pending/:username',protectRoute,checkPending);

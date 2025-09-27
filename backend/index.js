@@ -5,6 +5,9 @@ import mongoose from 'mongoose';
 import authrouter from './routes/authRoutes.js'
 import requestsrouter from './routes/requestRoutes.js'
 import chatRouter from './routes/chatRoutes.js'
+import eventRouter from './routes/eventRoutes.js'
+import meetingRouter from './routes/meetingRoutes.js'
+import ratingRouter from './routes/ratingRoutes.js'
 import cookieParser from 'cookie-parser';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -25,7 +28,10 @@ console.log(process.env.FRONTEND_ORIGIN,process.env.PORT,process.env.MONGODB_URI
 app.use('/api',authrouter);
 app.use('/api',requestsrouter);
 app.use('/api',chatRouter);
-app.use('/api',teamrouter)
+app.use('/api',eventRouter);
+app.use('/api',meetingRouter);
+app.use('/api',ratingRouter);
+app.use('/api',teamrouter);
 
 const server = http.createServer(app);
 const io = new Server(server, { 
