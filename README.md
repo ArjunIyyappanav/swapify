@@ -5,7 +5,6 @@ It enables students to **share their skills, learn from peers, and collaborate**
 Whether it’s coding, design, music, language learning, or mentoring — Swapify creates a community-driven space to grow together.  
 
 ---
-
 ## 🚀 Features
 
 - 🔐 **Campus-Only Access** – restricted to VIT Chennai students for authenticity  
@@ -14,6 +13,7 @@ Whether it’s coding, design, music, language learning, or mentoring — Swapif
 - 📅 **Collaboration Requests** – schedule and track skill sessions  
 - 💬 **In-App Messaging** – connect with students directly  
 - 📊 **Dashboard** – manage requests, sessions, and feedback  
+- 👥 **Team Creation & Collaboration** – create teams, showcase them publicly, accept join requests, and schedule team meets  
 - 🌐 **Responsive UI** – works smoothly on both mobile and desktop  
 
 ---
@@ -30,13 +30,15 @@ Whether it’s coding, design, music, language learning, or mentoring — Swapif
 - JWT Authentication  
 
 **Deployment:**  
-- Vercel (Frontend)  
-- Render / Railway / AWS (Backend & Database)  
+- Vercel (Frontend & Backend)  
+- MongoDB (Database)  
 
 ---
 
-## 📸 Screenshots / Preview
-*(Add screenshots or demo GIFs here once ready)*  
+<img width="1919" height="915" alt="image" src="https://github.com/user-attachments/assets/ba8a3914-22fa-4730-8b32-32ee51f64bdc" />
+<img width="1916" height="913" alt="image" src="https://github.com/user-attachments/assets/34e80c0b-38ba-4683-b124-12759c3f9fea" />
+<img width="1919" height="917" alt="image" src="https://github.com/user-attachments/assets/70dbc3e0-70e6-4fe3-8fa8-33ac6aae7819" />
+<img width="1919" height="919" alt="image" src="https://github.com/user-attachments/assets/8f681a4b-0663-42eb-a6bd-7a22d2e25cbc" />
 
 ---
 
