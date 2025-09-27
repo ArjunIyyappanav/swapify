@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { navigation } from "./utils/navigation";
-import Navbar from "./components/Navbar";
+import Navbar from "./components/NavBar";
 import Landing from "./pages/Landing";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
