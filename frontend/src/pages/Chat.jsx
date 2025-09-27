@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "../utils/api";
 import { io } from "socket.io-client";
-import { Star, X } from "lucide-react";
 
 // --- SVG Icon Components for a cleaner UI ---
 
@@ -33,11 +32,6 @@ export default function Chat() {
   const [showMeetInput, setShowMeetInput] = useState(false);
   const [meetUrl, setMeetUrl] = useState("");
   const [me, setMe] = useState(null);
-  const [showRatingModal, setShowRatingModal] = useState(false);
-  const [ratingData, setRatingData] = useState(null);
-  const [rating, setRating] = useState(0);
-  const [ratingComment, setRatingComment] = useState("");
-  const [submittingRating, setSubmittingRating] = useState(false);
   const socketRef = useRef(null);
   const activeRef = useRef(null);
   const bottomRef = useRef(null);
@@ -91,45 +85,6 @@ export default function Chat() {
   const handleStartMeet = () => {
     window.open('https://meet.new', '_blank', 'noopener');
     setShowMeetInput(true);
-  };
-
-  const handleEndChat = async () => {
-    if (!active) return;
-    try {
-      const res = await axios.post(`/chat/${active._id}/end`, {}, { withCredentials: true });
-      setRatingData(res.data);
-      setShowRatingModal(true);
-      // Remove the match from the list
-      setMatches(prev => prev.filter(m => m._id !== active._id));
-      setActive(null);
-      setMessages([]);
-    } catch (e) {
-      console.error('Failed to end chat:', e);
-      alert('Failed to end chat. Please try again.');
-    }
-  };
-
-  const handleSubmitRating = async () => {
-    if (!ratingData || rating === 0) return;
-    setSubmittingRating(true);
-    try {
-      await axios.post('/ratings', {
-        toUserId: ratingData.otherUser,
-        stars: rating,
-        comment: ratingComment,
-        swapId: active?._id
-      }, { withCredentials: true });
-      setShowRatingModal(false);
-      setRatingData(null);
-      setRating(0);
-      setRatingComment("");
-      alert('Rating submitted successfully!');
-    } catch (e) {
-      console.error('Failed to submit rating:', e);
-      alert('Failed to submit rating. Please try again.');
-    } finally {
-      setSubmittingRating(false);
-    }
   };
   const renderContent = (text) => {
     try {
@@ -226,23 +181,13 @@ export default function Chat() {
                         <p className="font-bold">{activeMatchUser?.name}</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={handleStartMeet} 
-                    className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded-full transition-colors"
-                    aria-label="Start Google Meet"
-                  >
-                    <VideoCameraIcon />
-                  </button>
-                  <button 
-                    onClick={handleEndChat} 
-                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-full transition-colors"
-                    aria-label="End Chat"
-                    title="End Chat & Rate"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+              <button 
+                onClick={handleStartMeet} 
+                className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded-full transition-colors"
+                aria-label="Start Google Meet"
+              >
+                <VideoCameraIcon />
+              </button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
@@ -298,76 +243,6 @@ export default function Chat() {
           </>
         )}
       </section>
-
-      {/* Rating Modal */}
-      {showRatingModal && ratingData && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 w-full max-w-lg mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Rate Your Skill Swap</h3>
-              <button 
-                onClick={() => setShowRatingModal(false)} 
-                className="p-1 rounded-full hover:bg-neutral-700"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="bg-neutral-800 p-4 rounded-lg">
-                <p className="text-sm text-neutral-400 mb-2">You swapped with:</p>
-                <p className="font-semibold">{ratingData.otherUser?.name}</p>
-                <div className="mt-2 text-sm">
-                  <p><span className="text-green-400">You offered:</span> {ratingData.skillOffered}</p>
-                  <p><span className="text-blue-400">You received:</span> {ratingData.skillReceived}</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Rate this swap (1-5 stars)</label>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setRating(star)}
-                      className={`p-1 ${star <= rating ? 'text-yellow-400' : 'text-neutral-400'} hover:text-yellow-400 transition-colors`}
-                    >
-                      <Star className={`w-6 h-6 ${star <= rating ? 'fill-current' : ''}`} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Optional comment</label>
-                <textarea
-                  value={ratingComment}
-                  onChange={(e) => setRatingComment(e.target.value)}
-                  placeholder="How was the skill swap experience?"
-                  className="w-full p-3 rounded-md bg-neutral-800 border border-neutral-700 placeholder:text-neutral-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowRatingModal(false)}
-                className="flex-1 py-2.5 px-4 bg-neutral-700 text-white font-semibold rounded-md hover:bg-neutral-600 transition-colors"
-              >
-                Skip Rating
-              </button>
-              <button
-                onClick={handleSubmitRating}
-                disabled={rating === 0 || submittingRating}
-                className="flex-1 py-2.5 px-4 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 disabled:bg-indigo-800 disabled:cursor-not-allowed transition-colors"
-              >
-                {submittingRating ? 'Submitting...' : 'Submit Rating'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

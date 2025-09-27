@@ -68,35 +68,4 @@ export const markRead = async (req, res) => {
     console.log(e);
     res.status(500).json({ message: 'Server Error' });
   }
-};
-
-export const endChat = async (req, res) => {
-  try {
-    const { matchId } = req.params;
-    const userId = req.user?._id;
-    const match = await Match.findById(matchId);
-    
-    if (!match) return res.status(404).json({ message: 'Match not found' });
-    if (String(match.user1) !== String(userId) && String(match.user2) !== String(userId)) {
-      return res.status(403).json({ message: 'Forbidden' });
-    }
-    
-    // Update match status to completed
-    match.status = 'completed';
-    match.completedAt = new Date();
-    await match.save();
-    
-    // Get the other user for rating
-    const otherUser = String(match.user1) === String(userId) ? match.user2 : match.user1;
-    
-    res.json({ 
-      success: true, 
-      otherUser, 
-      skillOffered: String(match.user1) === String(userId) ? match.skillfromuser1 : match.skillfromuser2,
-      skillReceived: String(match.user1) === String(userId) ? match.skillfromuser2 : match.skillfromuser1
-    });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({ message: 'Server Error' });
-  }
 }; 

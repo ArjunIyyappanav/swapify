@@ -164,30 +164,3 @@ export const getMyMatches = async (req, res) => {
         return res.status(500).json({message:"Server Error"});
     }
 }
-
-export const getAllTeams = async (req, res) => {
-    try {
-        const teams = await Team.find({ status: 'accepted' })
-            .populate('fromUser', 'name email skills_offered')
-            .populate('toUser', 'name email skills_offered')
-            .sort({ createdAt: -1 });
-        
-        // Transform the data to match frontend expectations
-        const transformedTeams = teams.map(team => ({
-            id: team._id,
-            name: `${team.fromUser.name} & ${team.toUser.name}`,
-            hackathon: team.description || 'General Project',
-            skills: [
-                ...(team.fromUser.skills_offered || []),
-                ...(team.toUser.skills_offered || [])
-            ].slice(0, 5), // Limit to 5 skills
-            rating: 4.5, // Default rating for now
-            members: [team.fromUser, team.toUser]
-        }));
-        
-        res.status(200).json(transformedTeams);
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: "Server Error" });
-    }
-}

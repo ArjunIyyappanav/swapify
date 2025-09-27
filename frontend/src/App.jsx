@@ -2,14 +2,12 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { loginSuccess, logout } from "./redux/authSlice";
 import { navigation } from "./utils/navigation";
-import NavBar from "./components/NavBar";
+import Navbar from "./components/Navbar";
 import Landing from "./pages/Landing";
-import Signup from "./pages/signup";
+import Signup from "./pages/Signup";
 import Login from "./pages/Login";
-import CreateRequest from "./pages/createRequest";
+import CreateRequest from "./pages/CreateRequest";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
@@ -25,33 +23,33 @@ import ProfileView from "./pages/ProfileView";
 import Classes from "./pages/Classes";
 import Members from "./pages/Members";
 import TeamRequests from "./pages/TeamRequests";
-import TeamRequestManagement from "./pages/teams";
 import CreateTeam from "./pages/CreateTeam";
 import axios from "./utils/api";
 import "./App.css";
 
 export default function Root() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const dispatch = useDispatch();
-  const { user, loading } = useSelector((state) => state.auth);
-  const isAuthenticated = !!user;
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await axios.get("/auth/checkAuth", { withCredentials: true });
-        dispatch(loginSuccess(res.data));
+        await axios.get("/auth/checkAuth", { withCredentials: true });
+        setIsAuthenticated(true);
       } catch (err) {
-        dispatch(logout());
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
       }
     };
     checkAuth();
-  }, [dispatch]);
+  }, []);
 
   const handleLogout = async () => {
     try {
       await axios.post("/auth/logout", {}, { withCredentials: true });
-      dispatch(logout());
+      setIsAuthenticated(false);
       window.location.href = "/login";
     } catch (err) {
       console.error("Logout failed", err);
@@ -69,7 +67,7 @@ export default function Root() {
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-200 font-sans antialiased">
-      <NavBar />
+      <Navbar />
       {/* Sidebar (Desktop, only for authenticated users) */}
       {isAuthenticated && !isPublicRoute && (
         <aside className="fixed inset-y-0 left-0 z-20 w-72 bg-gradient-to-b from-neutral-950 to-neutral-900 border-r border-neutral-800 shadow-2xl hidden md:block overflow-y-auto pt-16">
@@ -211,7 +209,6 @@ export default function Root() {
             <Route path="/users/:name" element={<ProtectedRoute><ProfileView /></ProtectedRoute>} />
             <Route path="/auth/:id" element={<ProtectedRoute><Members /></ProtectedRoute>} />
             <Route path="/teams" element={<ProtectedRoute><TeamRequests /></ProtectedRoute>} />
-            <Route path="/team-requests" element={<ProtectedRoute><TeamRequestManagement /></ProtectedRoute>} />
             <Route path="/team/create/:name" element={<ProtectedRoute><CreateTeam /></ProtectedRoute>} />
             <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
