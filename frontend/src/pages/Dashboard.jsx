@@ -131,7 +131,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ skillsListed: 0, swapRequests: 0, successfulMatches: 0 });
   const [displayName, setDisplayName] = useState("Welcome");
   const [recentActivity, setRecentActivity] = useState([]);
-  const [hackathons, setHackathons] = useState([]);
+  const [events, setEvents] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -177,11 +177,12 @@ export default function Dashboard() {
 
         setRecentActivity(formattedActivity);
 
-        // Fetch hackathons
-        const hackathonsRes = await axios.get("/events", { withCredentials: true });
-        setHackathons(hackathonsRes.data || []);
+        // Fetch all events
+        const eventsRes = await axios.get("/events", { withCredentials: true });
+        const allEvents = eventsRes.data || [];
+        
+        setEvents(allEvents);
       } catch (err) {
-        // setError("Failed to load dashboard data. Please try again.");
         console.error("Failed to load dashboard data", err);
       }
     };
@@ -239,18 +240,26 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="bg-slate-800/50 rounded-xl p-6">
-            <h3 className="text-xl font-semibold mb-4 text-white">Upcoming Hackathons</h3>
-            {hackathons.length > 0 ? (
+            <h3 className="text-xl font-semibold mb-4 text-white flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Upcoming Events
+            </h3>
+            {events.length > 0 ? (
               <ul className="space-y-2 text-sm text-slate-400">
-                {hackathons.map((event) => (
-                  <li key={event.id}>
-                    {event.name} - {new Date(event.date).toLocaleDateString()}{" "}
-                    <span className="text-amber-400">• {event.spots} spots open</span>
+                {events.slice(0, 8).map((event) => (
+                  <li key={event._id} className="flex items-center justify-between">
+                    <div>
+                      <span className="text-slate-300">{event.name}</span>
+                      <span className="ml-2 text-slate-500 text-xs">from {event.source}</span>
+                    </div>
+                    <span className="text-amber-400 text-xs px-2 py-1 bg-amber-400/10 rounded-full">
+                      {event.type}
+                    </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-slate-400">No upcoming hackathons.</p>
+              <p className="text-slate-400">No events found.</p>
             )}
           </div>
         </motion.section>

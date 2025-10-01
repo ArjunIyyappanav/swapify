@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import UserRating from "../components/UserRating";
 import { 
   Users, Plus, Star, Send, Clock, X, Check, Filter, Search as SearchIcon,
   Settings, UserCheck, UserX, Crown, Calendar, MapPin, Globe, Lock,
@@ -88,12 +89,12 @@ const TeamCard = ({ team, onJoinTeam, onManageTeam, onLeaveTeam, userRatings = {
                     <div className="text-xs sm:text-sm text-neutral-400 mb-1">Created by</div>
                     <div className="flex items-center gap-2 sm:justify-start justify-end">
                         <span className="font-medium text-white text-sm sm:text-base truncate">{team.creator.name}</span>
-                        {creatorRating && creatorRating.totalRatings > 0 && (
-                            <div className="flex items-center gap-1 text-yellow-400 flex-shrink-0">
-                                <Star className="w-3 h-3 fill-current" />
-                                <span className="text-xs">{creatorRating.averageRating}</span>
-                            </div>
-                        )}
+                        <UserRating 
+                            rating={creatorRating?.averageRating} 
+                            totalRatings={creatorRating?.totalRatings} 
+                            size="xs" 
+                            className="flex-shrink-0"
+                        />
                     </div>
                 </div>
             </div>
@@ -234,11 +235,15 @@ export default function Teams() {
     const [notification, setNotification] = useState({ show: false, message: '', type: 'error' });
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showManageModal, setShowManageModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [creating, setCreating] = useState(false);
     const [processing, setProcessing] = useState(null);
+    const [editing, setEditing] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const [userRatings, setUserRatings] = useState({});
     const [currentUser, setCurrentUser] = useState(null);
+    const [events, setEvents] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('all');
     
@@ -248,6 +253,17 @@ export default function Teams() {
         maxMembers: 6,
         skillsRequired: '',
         category: 'hackathon',
+        event: '',
+        isPublic: true
+    });
+    
+    const [editForm, setEditForm] = useState({
+        name: '',
+        description: '',
+        maxMembers: 6,
+        skillsRequired: '',
+        category: 'hackathon',
+        event: '',
         isPublic: true
     });
 
@@ -265,23 +281,39 @@ export default function Teams() {
                 return;
             }
             
-            // Use the legacy team routes to get requests
-            const requests = [];
-            for (const team of createdTeams) {
-                try {
-                    const response = await axios.get(`/team/getteam/${team._id}`, { withCredentials: true });
-                    if (response.data && Array.isArray(response.data)) {
-                        const pendingRequests = response.data
-                            .filter(req => req.status === 'pending')
-                            .map(req => ({ ...req, teamName: team.name }));
-                        requests.push(...pendingRequests);
-                    }
-                } catch (err) {
-                    console.log(`No requests found for team ${team._id}`);
+            // Create a new endpoint to get team requests
+            try {
+                const response = await axios.get('/teams/requests', { withCredentials: true });
+                if (response.data && Array.isArray(response.data)) {
+                    const pendingRequests = response.data
+                        .filter(req => req.status === 'pending')
+                        .map(req => ({ 
+                            ...req, 
+                            teamName: req.toTeam?.name || 'Unknown Team' 
+                        }));
+                    setJoinRequests(pendingRequests);
+                } else {
+                    setJoinRequests([]);
                 }
+            } catch (err) {
+                console.log('No join requests endpoint available, trying legacy route');
+                // Fallback to legacy routes if new endpoint doesn't exist
+                const requests = [];
+                for (const team of createdTeams) {
+                    try {
+                        const response = await axios.get(`/team/getteam/${team._id}`, { withCredentials: true });
+                        if (response.data && Array.isArray(response.data)) {
+                            const pendingRequests = response.data
+                                .filter(req => req.status === 'pending')
+                                .map(req => ({ ...req, teamName: team.name }));
+                            requests.push(...pendingRequests);
+                        }
+                    } catch (legacyErr) {
+                        console.log(`No requests found for team ${team._id}`);
+                    }
+                }
+                setJoinRequests(requests);
             }
-            
-            setJoinRequests(requests);
         } catch (error) {
             console.error('Error loading join requests:', error);
         }
@@ -290,33 +322,37 @@ export default function Teams() {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [teamsRes, myTeamsRes, userRes] = await Promise.all([
+            const [teamsRes, myTeamsRes, userRes, eventsRes] = await Promise.all([
                 axios.get('/teams', { withCredentials: true }),
                 axios.get('/teams/my', { withCredentials: true }),
-                axios.get('/auth/checkAuth', { withCredentials: true })
+                axios.get('/auth/checkAuth', { withCredentials: true }),
+                axios.get('/events', { withCredentials: true }).catch(() => ({ data: [] }))
             ]);
             
             setTeams(teamsRes.data || []);
             setMyTeams(myTeamsRes.data || []);
             setCurrentUser(userRes.data);
+            setEvents(eventsRes.data || []);
             
-            // Load ratings for team creators
+            // Load ratings for team creators using bulk endpoint
             const allTeams = [...(teamsRes.data || []), ...(myTeamsRes.data || [])];
             const creatorIds = [...new Set(allTeams.map(team => team.creator._id))];
+            const memberIds = [...new Set(allTeams.flatMap(team => team.members.map(member => member._id)))];
+            const allUserIds = [...new Set([...creatorIds, ...memberIds])];
             
-            if (creatorIds.length > 0) {
-                const ratingsPromises = creatorIds.map(creatorId =>
-                    axios.get(`/rating/user/${creatorId}`, { withCredentials: true })
-                        .then(res => ({ userId: creatorId, ...res.data }))
-                        .catch(() => ({ userId: creatorId, averageRating: 0, totalRatings: 0 }))
-                );
-                
-                const ratingsResults = await Promise.all(ratingsPromises);
-                const ratingsMap = {};
-                ratingsResults.forEach(rating => {
-                    ratingsMap[rating.userId] = rating;
-                });
-                setUserRatings(ratingsMap);
+            if (allUserIds.length > 0) {
+                try {
+                    const ratingsRes = await axios.post('/rating/bulk', { userIds: allUserIds }, { withCredentials: true });
+                    setUserRatings(ratingsRes.data);
+                } catch (error) {
+                    console.error('Error loading bulk ratings:', error);
+                    // Fallback to default ratings
+                    const ratingsMap = {};
+                    allUserIds.forEach(userId => {
+                        ratingsMap[userId] = { averageRating: 5.0, totalRatings: 0 };
+                    });
+                    setUserRatings(ratingsMap);
+                }
             }
         } catch (error) {
             console.error('Error loading teams:', error);
@@ -352,7 +388,7 @@ export default function Teams() {
             
             setNotification({ show: true, message: 'Team created successfully!', type: 'success' });
             setShowCreateModal(false);
-            setTeamForm({ name: '', description: '', maxMembers: 6, skillsRequired: '', category: 'hackathon', isPublic: true });
+            setTeamForm({ name: '', description: '', maxMembers: 6, skillsRequired: '', category: 'hackathon', event: '', isPublic: true });
             loadData();
         } catch (error) {
             console.error('Error creating team:', error);
@@ -399,8 +435,8 @@ export default function Teams() {
     const handleJoinRequest = async (requestId, status) => {
         setProcessing(requestId);
         try {
-            // Use legacy team route for handling requests
-            await axios.patch('/team/update', {
+            // Use new team route for handling requests
+            await axios.patch('/teams/join-request', {
                 requestId,
                 status
             }, { withCredentials: true });
@@ -422,6 +458,65 @@ export default function Teams() {
             });
         } finally {
             setProcessing(null);
+        }
+    };
+
+    const handleEditTeam = (team) => {
+        setEditForm({
+            name: team.name,
+            description: team.description,
+            maxMembers: team.maxMembers,
+            skillsRequired: team.skillsRequired.join(', '),
+            category: team.category,
+            event: team.event?._id || '',
+            isPublic: team.isPublic
+        });
+        setSelectedTeam(team);
+        setShowManageModal(false);
+        setShowEditModal(true);
+    };
+
+    const handleUpdateTeam = async () => {
+        if (!editForm.name || !editForm.description) {
+            setNotification({ show: true, message: 'Team name and description are required', type: 'error' });
+            return;
+        }
+
+        setEditing(true);
+        try {
+            await axios.patch(`/teams/${selectedTeam._id}`, {
+                ...editForm,
+                skillsRequired: editForm.skillsRequired.split(',').map(s => s.trim()).filter(s => s)
+            }, { withCredentials: true });
+            
+            setNotification({ show: true, message: 'Team updated successfully!', type: 'success' });
+            setShowEditModal(false);
+            setEditForm({ name: '', description: '', maxMembers: 6, skillsRequired: '', category: 'hackathon', event: '', isPublic: true });
+            loadData();
+        } catch (error) {
+            console.error('Error updating team:', error);
+            setNotification({ show: true, message: error.response?.data?.message || 'Failed to update team', type: 'error' });
+        } finally {
+            setEditing(false);
+        }
+    };
+
+    const handleDeleteTeam = async (teamId) => {
+        if (!confirm('Are you sure you want to delete this team? This action cannot be undone.')) {
+            return;
+        }
+        
+        setDeleting(true);
+        try {
+            await axios.delete(`/teams/${teamId}`, { withCredentials: true });
+            setNotification({ show: true, message: 'Team deleted successfully!', type: 'success' });
+            setShowManageModal(false);
+            loadData();
+        } catch (error) {
+            console.error('Error deleting team:', error);
+            setNotification({ show: true, message: error.response?.data?.message || 'Failed to delete team', type: 'error' });
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -700,6 +795,25 @@ export default function Teams() {
                                 </div>
 
                                 <div>
+                                    <label className="block text-xs sm:text-sm font-medium text-neutral-300 mb-2">
+                                        Event (Optional)
+                                    </label>
+                    <select
+                        value={teamForm.event}
+                        onChange={(e) => setTeamForm(prev => ({ ...prev, event: e.target.value }))}
+                        className="w-full px-3 py-2.5 sm:py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
+                    >
+                        <option value="">No specific event</option>
+                        {events.filter(event => event.type === 'hackathon' || teamForm.category === 'hackathon').map(event => (
+                            <option key={event._id} value={event._id}>
+                                {event.name} ({event.type}) - {event.source}
+                            </option>
+                        ))}
+                    </select>
+                                    <p className="text-xs text-neutral-500 mt-1">Select a specific hackathon or event for this team</p>
+                                </div>
+
+                                <div>
                                     <label className="block text-sm font-medium text-neutral-300 mb-2">
                                         Skills Required
                                     </label>
@@ -824,6 +938,11 @@ export default function Teams() {
                                                             {String(member._id) === String(selectedTeam.creator._id) && (
                                                                 <Crown className="w-4 h-4 text-yellow-400" />
                                                             )}
+                                                            <UserRating 
+                                                                rating={userRatings[member._id]?.averageRating} 
+                                                                totalRatings={userRatings[member._id]?.totalRatings} 
+                                                                size="xs"
+                                                            />
                                                         </div>
                                                         <div className="text-xs text-neutral-400">{member.email}</div>
                                                     </div>
@@ -861,15 +980,179 @@ export default function Teams() {
                                     Close
                                 </button>
                                 <div className="flex gap-3">
-                                    <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
+                                    <button 
+                                        onClick={() => handleEditTeam(selectedTeam)}
+                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                                    >
                                         <Edit className="w-4 h-4" />
                                         Edit Team
                                     </button>
-                                    <button className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2">
+                                    <button 
+                                        onClick={() => handleDeleteTeam(selectedTeam._id)}
+                                        disabled={deleting}
+                                        className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                                    >
                                         <Trash2 className="w-4 h-4" />
-                                        Delete Team
+                                        {deleting ? 'Deleting...' : 'Delete Team'}
                                     </button>
                                 </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Edit Team Modal */}
+            <AnimatePresence>
+                {showEditModal && selectedTeam && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 sm:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+                        >
+                            <div className="flex justify-between items-center mb-4 sm:mb-6">
+                                <h2 className="text-xl sm:text-2xl font-bold text-white">Edit {selectedTeam.name}</h2>
+                                <button
+                                    onClick={() => setShowEditModal(false)}
+                                    className="text-neutral-400 hover:text-white p-1"
+                                >
+                                    <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-3 sm:space-y-4">
+                                <div>
+                                    <label className="block text-xs sm:text-sm font-medium text-neutral-300 mb-2">
+                                        Team Name *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editForm.name}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                                        placeholder="Enter team name"
+                                        className="w-full px-3 py-2.5 sm:py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs sm:text-sm font-medium text-neutral-300 mb-2">
+                                        Description *
+                                    </label>
+                                    <textarea
+                                        value={editForm.description}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                                        placeholder="Describe your team's purpose and goals"
+                                        rows={3}
+                                        className="w-full px-3 py-2.5 sm:py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none text-sm sm:text-base"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                    <div>
+                                        <label className="block text-xs sm:text-sm font-medium text-neutral-300 mb-2">
+                                            Category
+                                        </label>
+                                        <select
+                                            value={editForm.category}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                                            className="w-full px-3 py-2.5 sm:py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
+                                        >
+                                            <option value="hackathon">Hackathon</option>
+                                            <option value="project">Project</option>
+                                            <option value="study">Study Group</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs sm:text-sm font-medium text-neutral-300 mb-2">
+                                            Max Members
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min={selectedTeam.members.length}
+                                            max="20"
+                                            value={editForm.maxMembers}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, maxMembers: parseInt(e.target.value) || selectedTeam.members.length }))}
+                                            className="w-full px-3 py-2.5 sm:py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
+                                        />
+                                        <p className="text-xs text-neutral-500 mt-1">Cannot be less than current member count ({selectedTeam.members.length})</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs sm:text-sm font-medium text-neutral-300 mb-2">
+                                        Skills Required
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editForm.skillsRequired}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, skillsRequired: e.target.value }))}
+                                        placeholder="e.g. React, Python, UI/UX Design (comma separated)"
+                                        className="w-full px-3 py-2.5 sm:py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
+                                    />
+                                    <p className="text-xs text-neutral-500 mt-1">Separate skills with commas</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs sm:text-sm font-medium text-neutral-300 mb-2">
+                                        Event (Optional)
+                                    </label>
+                                    <select
+                                        value={editForm.event}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, event: e.target.value }))}
+                                        className="w-full px-3 py-2.5 sm:py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
+                                    >
+                                        <option value="">No specific event</option>
+                                        {events.filter(event => event.category === 'hackathon' || editForm.category === 'hackathon').map(event => (
+                                            <option key={event._id} value={event._id}>
+                                                {event.name} {event.startDate ? `- ${new Date(event.startDate).toLocaleDateString()}` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-neutral-500 mt-1">Select a specific hackathon or event for this team</p>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="editIsPublic"
+                                        checked={editForm.isPublic}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, isPublic: e.target.checked }))}
+                                        className="w-4 h-4 text-indigo-600 bg-neutral-800 border-neutral-700 rounded focus:ring-indigo-500"
+                                    />
+                                    <label htmlFor="editIsPublic" className="text-sm text-neutral-300">
+                                        Make this team publicly visible
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-neutral-800">
+                                <button
+                                    onClick={() => setShowEditModal(false)}
+                                    className="w-full sm:w-auto px-4 py-2.5 sm:py-2 text-neutral-400 hover:text-white transition-colors text-sm sm:text-base"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleUpdateTeam}
+                                    disabled={editing || !editForm.name || !editForm.description}
+                                    className="w-full sm:w-auto px-6 py-2.5 sm:py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-neutral-700 disabled:text-neutral-500 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
+                                >
+                                    {editing ? (
+                                        <>
+                                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Updating...
+                                        </>
+                                    ) : (
+                                        'Update Team'
+                                    )}
+                                </button>
                             </div>
                         </motion.div>
                     </div>

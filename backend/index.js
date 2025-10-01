@@ -15,6 +15,7 @@ import jwt from 'jsonwebtoken';
 import Match from './models/match.js';
 import Message from './models/message.js';
 import teamrouter from './routes/teamRoutes.js';
+import eventRouter from './routes/eventRoutes.js';
 
 
 dotenv.config()
@@ -23,12 +24,16 @@ const app = express()
 app.use(cookieParser());
 app.use(cors({ origin: process.env.FRONTEND_ORIGIN, credentials: true }))
 app.use(express.json())
+
+// Serve uploaded files statically
+app.use('/uploads', express.static('uploads'))
 console.log(process.env.FRONTEND_ORIGIN,process.env.PORT,process.env.MONGODB_URI);
 
 app.use('/api',authrouter);
 app.use('/api',requestsrouter);
 app.use('/api',chatRouter);
 app.use('/api',teamrouter);
+app.use('/api',eventRouter);
 app.use('/api',meetingRouter);
 app.use('/api',ratingRouter);
 app.use('/api',blockRouter);
@@ -92,7 +97,7 @@ io.on('connection', (socket) => {
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(()=>{
-        app.listen(process.env.PORT, ()=>{
+        server.listen(process.env.PORT, ()=>{
             console.log("Connection successful, App listening on port " + process.env.PORT);
         })
     })

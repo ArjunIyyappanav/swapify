@@ -29,11 +29,11 @@ export default function Ratings() {
   const [newRating, setNewRating] = useState({ stars: 0, comment: "", userId: "" });
 
   useEffect(() => {
-    axios.get("/ratings", { withCredentials: true }).then(res => setRatings(res.data));
+    axios.get("/rating", { withCredentials: true }).then(res => setRatings(res.data));
   }, []);
 
   const handleSubmit = () => {
-    axios.post("/ratings", newRating, { withCredentials: true }).then(() => {
+    axios.post("/rating", newRating, { withCredentials: true }).then(() => {
       setNewRating({ stars: 0, comment: "", userId: "" });
       // Refresh ratings
     });

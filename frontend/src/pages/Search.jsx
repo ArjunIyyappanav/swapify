@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "../utils/api";
 import { Search as SearchIcon, X, Sparkles, Lightbulb, User, Send, SearchX, AlertTriangle, Star } from "lucide-react";
+import UserRating from "../components/UserRating";
 
 // --- Reusable Components for this page ---
 const Spinner = ({ text })  => (
@@ -67,20 +68,21 @@ export default function Search() {
         const { data } = await axios.get(`/users/search`, { params: { q: query }, withCredentials: true });
         setResults(data || []);
         
-        // Load ratings for each user
+        // Load ratings for all users using bulk endpoint
         if (data && data.length > 0) {
-          const ratingsPromises = data.map(user => 
-            axios.get(`/rating/user/${user._id}`, { withCredentials: true })
-              .then(res => ({ userId: user._id, ...res.data }))
-              .catch(() => ({ userId: user._id, averageRating: 0, totalRatings: 0 }))
-          );
-          
-          const ratingsResults = await Promise.all(ratingsPromises);
-          const ratingsMap = {};
-          ratingsResults.forEach(rating => {
-            ratingsMap[rating.userId] = rating;
-          });
-          setUserRatings(ratingsMap);
+          const userIds = data.map(user => user._id);
+          try {
+            const ratingsRes = await axios.post('/rating/bulk', { userIds }, { withCredentials: true });
+            setUserRatings(ratingsRes.data);
+          } catch (error) {
+            console.error('Error loading bulk ratings:', error);
+            // Fallback to default ratings
+            const ratingsMap = {};
+            userIds.forEach(userId => {
+              ratingsMap[userId] = { averageRating: 5.0, totalRatings: 0 };
+            });
+            setUserRatings(ratingsMap);
+          }
         }
       } catch (e) {
         console.error(e);
@@ -163,18 +165,17 @@ export default function Search() {
                         <button onClick={() => navigate(`/users/${u.name}`)} className="text-lg font-bold hover:underline truncate">{u.name}</button>
                         <div className="flex items-center gap-2 text-sm text-neutral-400">
                           <span className="truncate">{u.email}</span>
-                          {userRatings[u._id] && userRatings[u._id].totalRatings > 0 && (
-                            <div className="flex items-center gap-1 text-yellow-400">
-                              <Star size={12} className="fill-current" />
-                              <span>{userRatings[u._id].averageRating}</span>
-                              <span className="text-neutral-500">({userRatings[u._id].totalRatings})</span>
-                            </div>
-                          )}
+                          <UserRating 
+                            rating={userRatings[u._id]?.averageRating} 
+                            totalRatings={userRatings[u._id]?.totalRatings} 
+                            size="xs" 
+                            showCount={true}
+                          />
                         </div>
                     </div>
                 </div>
                  <div className="flex-shrink-0 flex items-center gap-2">
-                    <button onClick={() => navigate(`/team/create/${u.name}`)} className="px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 rounded-md font-semibold transition-colors flex items-center gap-2"><User size={14}/> Team Request</button>
+                    {/*<button onClick={() => navigate(`/team/create/${u.name}`)} className="px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 rounded-md font-semibold transition-colors flex items-center gap-2"><User size={14}/> Team Request</button>*/}
                     <button onClick={() => handleSendRequest(u)} className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-colors flex items-center gap-2"><Send size={14}/> Propose Swap</button>
                 </div>
             </div>

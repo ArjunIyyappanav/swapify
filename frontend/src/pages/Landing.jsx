@@ -28,14 +28,49 @@ export default function Landing() {
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+          animate={{ 
+            rotate: 360,
+            scale: [1, 1.1, 1],
+            opacity: [0.3, 0.6, 0.3]
+          }}
+          transition={{ 
+            rotate: { duration: 50, repeat: Infinity, ease: "linear" },
+            scale: { duration: 8, repeat: Infinity, ease: "easeInOut" },
+            opacity: { duration: 6, repeat: Infinity, ease: "easeInOut" }
+          }}
           className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-full blur-3xl"
         />
         <motion.div 
-          animate={{ rotate: -360 }}
-          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          animate={{ 
+            rotate: -360,
+            scale: [1, 1.2, 1],
+            opacity: [0.2, 0.5, 0.2]
+          }}
+          transition={{ 
+            rotate: { duration: 30, repeat: Infinity, ease: "linear" },
+            scale: { duration: 10, repeat: Infinity, ease: "easeInOut" },
+            opacity: { duration: 7, repeat: Infinity, ease: "easeInOut" }
+          }}
           className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-br from-red-500/10 to-pink-500/10 rounded-full blur-3xl"
+        />
+        {/* Additional floating particles */}
+        <motion.div 
+          animate={{ 
+            y: [-20, 20, -20],
+            x: [-10, 10, -10],
+            opacity: [0.3, 0.8, 0.3]
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/4 left-1/4 w-2 h-2 bg-indigo-400 rounded-full blur-sm"
+        />
+        <motion.div 
+          animate={{ 
+            y: [20, -20, 20],
+            x: [10, -10, 10],
+            opacity: [0.4, 0.9, 0.4]
+          }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute top-3/4 right-1/3 w-3 h-3 bg-pink-400 rounded-full blur-sm"
         />
       </div>
       
@@ -63,11 +98,20 @@ export default function Landing() {
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 bg-gradient-to-r from-white via-neutral-200 to-indigo-300 bg-clip-text text-transparent leading-tight"
+            className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 leading-tight"
           >
-            Swap Skills,
+            <span className="bg-gradient-to-r from-white via-neutral-200 to-indigo-300 bg-clip-text text-transparent">
+              Connect,
+            </span>
             <br />
-            <span className="bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent">Build Teams</span>
+            <motion.span 
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.8, type: "spring", stiffness: 200 }}
+              className="bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent inline-block"
+            >
+              Collaborate
+            </motion.span>
           </motion.h1>
           
           <motion.p 
@@ -85,19 +129,24 @@ export default function Landing() {
             transition={{ duration: 0.8, delay: 0.8 }}
             className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full max-w-md sm:max-w-none mx-auto"
           >
-            <Link 
-              to="/signup" 
-              className="w-full sm:w-auto group bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-red-500/25 text-sm sm:text-base"
-            >
-              Get Started Free
-              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link 
-              to="/login" 
-              className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold border-2 border-neutral-600 hover:border-neutral-500 text-neutral-300 hover:text-white transition-all duration-300 hover:bg-neutral-800/50 text-center text-sm sm:text-base"
-            >
-              Sign In
-            </Link>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+              <Link 
+                to="/signup" 
+                className="w-full sm:w-auto group bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-red-500/25 text-sm sm:text-base relative overflow-hidden"
+              >
+                <span className="relative z-10">Get Started Free</span>
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform relative z-10" />
+                <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-red-500 translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Link 
+                to="/login" 
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold border-2 border-neutral-600 hover:border-indigo-500 text-neutral-300 hover:text-white transition-all duration-300 hover:bg-gradient-to-r hover:from-neutral-800/50 hover:to-indigo-900/20 text-center text-sm sm:text-base backdrop-blur-sm"
+              >
+                Sign In
+              </Link>
+            </motion.div>
           </motion.div>
           
           <motion.div
@@ -106,7 +155,7 @@ export default function Landing() {
             transition={{ duration: 1, delay: 1.2 }}
             className="mt-8 sm:mt-16 text-neutral-500 text-xs sm:text-sm text-center px-4"
           >
-            ✨ Join {activeUsers}+ VIT Chennai students already swapping skills
+            ✨ Join {activeUsers}+ VIT Chennai students already collaborating
           </motion.div>
         </div>
       </motion.section>
@@ -176,7 +225,7 @@ export default function Landing() {
           
           {/* Popular Skills Section */}
           <motion.div variants={itemVariants} className="text-center">
-            <h3 className="text-2xl font-bold mb-8 text-neutral-200">Popular Skills Being Swapped</h3>
+            <h3 className="text-2xl font-bold mb-8 text-neutral-200">Popular Skills Being Shared</h3>
             <div className="flex flex-wrap justify-center gap-3">
               {[
                 "React.js", "Python", "UI/UX Design", "Machine Learning", "Photography", 
@@ -210,7 +259,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto">
           <motion.div variants={itemVariants} className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              How Swapify Works
+              How PeerPort Works
             </h2>
             <p className="text-xl text-neutral-400">
               Get started in just 3 simple steps
@@ -286,7 +335,7 @@ export default function Landing() {
                 to="/signup" 
                 className="group bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 px-8 py-4 rounded-xl font-semibold flex items-center gap-2 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-red-500/25"
               >
-                Join Swapify Now
+                Join PeerPort Now
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <div className="text-neutral-500 text-sm">
@@ -297,20 +346,23 @@ export default function Landing() {
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-neutral-800">
               {[
-                { number: `${activeUsers}+`, label: "Active Students" },
-                { number: "500+", label: "Skills Exchanged" },
-                { number: "50+", label: "Teams Formed" },
-                { number: "4.8★", label: "Average Rating" }
+                { number: `${activeUsers}+`, label: "Active Students", color: "from-indigo-400 to-purple-400" },
+                { number: "500+", label: "Skills Exchanged", color: "from-green-400 to-emerald-400" },
+                { number: "50+", label: "Teams Formed", color: "from-blue-400 to-cyan-400" },
+                { number: "4.8★", label: "Average Rating", color: "from-yellow-400 to-orange-400" }
               ].map((stat, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
                   transition={{ delay: i * 0.1 }}
-                  className="text-center"
+                  className="text-center group cursor-pointer"
                 >
-                  <div className="text-2xl md:text-3xl font-bold text-white mb-1">{stat.number}</div>
-                  <div className="text-sm text-neutral-400">{stat.label}</div>
+                  <div className={`text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r ${stat.color} bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300`}>
+                    {stat.number}
+                  </div>
+                  <div className="text-sm text-neutral-400 group-hover:text-neutral-300 transition-colors duration-300">{stat.label}</div>
                 </motion.div>
               ))}
             </div>
@@ -322,7 +374,7 @@ export default function Landing() {
       <footer className="py-8 px-4 border-t border-neutral-800 bg-neutral-950">
         <div className="max-w-4xl mx-auto text-center text-neutral-500 text-sm">
           <p className="mb-2">Made with ❤️ for VIT Chennai students</p>
-          <p>© 2024 Swapify. Connecting minds, building futures.</p>
+          <p>© 2024 PeerPort. Connecting minds, building futures.</p>
         </div>
       </footer>
     </div>

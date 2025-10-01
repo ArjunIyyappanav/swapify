@@ -1,6 +1,7 @@
 import Rating from '../models/rating.js';
 import Match from '../models/match.js';
 import User from '../models/Users.js';
+import mongoose from 'mongoose';
 
 // Create a rating for a completed skill swap
 export const createRating = async (req, res) => {
@@ -27,7 +28,6 @@ export const createRating = async (req, res) => {
       return res.status(404).json({ message: 'Match not found or you are not authorized to rate it' });
     }
 
-    // Check if user already rated this match
     const existingRating = await Rating.findOne({
       rater: raterId,
       match: matchId
@@ -50,6 +50,16 @@ export const createRating = async (req, res) => {
     });
 
     await newRating.save();
+
+    // Recalculate the ratee's overall rating
+    const allRatingsForUser = await Rating.find({ ratee: rateeId });
+    const averageRating = allRatingsForUser.reduce((sum, r) => sum + r.rating, 0) / allRatingsForUser.length;
+    
+    // Update user's rating
+    await User.findByIdAndUpdate(rateeId, {
+      rating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
+      totalRatings: allRatingsForUser.length
+    });
 
     const populatedRating = await Rating.findById(newRating._id)
       .populate('rater', 'name')
@@ -75,6 +85,29 @@ export const getUserRatings = async (req, res) => {
     // If no userId provided, get current user's ratings
     const targetUserId = userId || requestingUserId;
 
+    // Validate ObjectId format
+    if (!targetUserId || !mongoose.Types.ObjectId.isValid(targetUserId)) {
+      return res.json({
+        received: [],
+        given: [],
+        averageRating: 5.0,
+        totalRatings: 0
+      });
+    }
+
+    // Get user's rating directly from User model
+    const user = await User.findById(targetUserId, 'rating totalRatings');
+    
+    if (!user) {
+      return res.json({
+        received: [],
+        given: [],
+        averageRating: 5.0,
+        totalRatings: 0
+      });
+    }
+
+    // Get detailed ratings if needed
     const receivedRatings = await Rating.find({ ratee: targetUserId })
       .populate('rater', 'name')
       .populate('match')
@@ -85,20 +118,20 @@ export const getUserRatings = async (req, res) => {
       .populate('match')
       .sort({ createdAt: -1 });
 
-    // Calculate average rating
-    const averageRating = receivedRatings.length > 0 
-      ? receivedRatings.reduce((sum, r) => sum + r.rating, 0) / receivedRatings.length
-      : 0;
-
     res.json({
       received: receivedRatings,
       given: givenRatings,
-      averageRating: Math.round(averageRating * 10) / 10,
-      totalRatings: receivedRatings.length
+      averageRating: user.rating || 5.0,
+      totalRatings: user.totalRatings || 0
     });
   } catch (error) {
     console.error('Error fetching user ratings:', error);
-    res.status(500).json({ message: 'Failed to fetch ratings' });
+    res.json({
+      received: [],
+      given: [],
+      averageRating: 5.0,
+      totalRatings: 0
+    });
   }
 };
 
@@ -192,5 +225,53 @@ export const deleteRating = async (req, res) => {
   } catch (error) {
     console.error('Error deleting rating:', error);
     res.status(500).json({ message: 'Failed to delete rating' });
+  }
+};
+
+// Get multiple users' ratings at once
+export const getBulkUserRatings = async (req, res) => {
+  try {
+    const { userIds } = req.body; // Expecting array of user IDs
+    
+    if (!userIds || !Array.isArray(userIds)) {
+      return res.status(400).json({ message: 'userIds array is required' });
+    }
+    
+    // Validate all user IDs
+    const validUserIds = userIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+    
+    if (validUserIds.length === 0) {
+      return res.json({});
+    }
+    
+    // Get users with their ratings
+    const users = await User.find(
+      { _id: { $in: validUserIds } },
+      'rating totalRatings'
+    );
+    
+    // Create response object
+    const ratingsMap = {};
+    users.forEach(user => {
+      ratingsMap[user._id] = {
+        averageRating: user.rating || 5.0,
+        totalRatings: user.totalRatings || 0
+      };
+    });
+    
+    // Fill in default values for users not found
+    validUserIds.forEach(userId => {
+      if (!ratingsMap[userId]) {
+        ratingsMap[userId] = {
+          averageRating: 5.0,
+          totalRatings: 0
+        };
+      }
+    });
+    
+    res.json(ratingsMap);
+  } catch (error) {
+    console.error('Error fetching bulk user ratings:', error);
+    res.status(500).json({ message: 'Failed to fetch user ratings' });
   }
 };

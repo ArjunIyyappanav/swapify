@@ -9,6 +9,7 @@ const teamSchema = new Schema({
     maxMembers: {type: Number, default: 6},
     skillsRequired: [{type: String}],
     category: {type: String, enum: ['hackathon', 'project', 'study', 'other'], default: 'hackathon'},
+    event: {type: Schema.Types.ObjectId, ref: 'Event'},
     isPublic: {type: Boolean, default: true},
     status: {type: String, enum: ['active', 'full', 'inactive'], default: 'active'},
     createdAt: {type: Date, default: Date.now}

@@ -109,13 +109,15 @@ export const updateRequestStatus = async(req,res) =>{
 
         // If accepted, create a Match connecting the two users
         if (status === 'accepted') {
-            const existingMatch = await Match.findOne({
+            // Check for existing active match (not ended)
+            const existingActiveMatch = await Match.findOne({
                 $or: [
                     { user1: updatedRequest.fromUser, user2: updatedRequest.toUser },
                     { user1: updatedRequest.toUser, user2: updatedRequest.fromUser },
-                ]
+                ],
+                status: { $ne: 'ended' } // Only check for non-ended matches
             });
-            if (!existingMatch) {
+            if (!existingActiveMatch) {
                 await Match.create({
                     user1: updatedRequest.fromUser,
                     user2: updatedRequest.toUser,
@@ -151,6 +153,30 @@ export const deleteRequest = async(req,res) =>{
         return res.status(500).json({message:"Server Error"});  
     }
 }
+
+export const clearAllRequests = async (req, res) => {
+    try {
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ message: "Not authorized" });
+        }
+
+        // Delete all requests sent by the user
+        const sentDeleted = await Request.deleteMany({ fromUser: userId });
+        
+        // Delete all requests received by the user
+        const receivedDeleted = await Request.deleteMany({ toUser: userId });
+
+        return res.status(200).json({
+            message: "All requests cleared successfully",
+            sentDeleted: sentDeleted.deletedCount,
+            receivedDeleted: receivedDeleted.deletedCount
+        });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
 
 export const getMyMatches = async (req, res) => {
     try{

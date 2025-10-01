@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "../utils/api";
 import { Mail, Sparkles, Lightbulb } from "lucide-react";
+import UserRating from "../components/UserRating";
 
 const Spinner = () => (
   <div className="flex flex-col items-center justify-center p-10">
@@ -55,9 +56,19 @@ export default function Profile() {
         </div>
         <div className="flex-1">
           <h1 className="text-4xl font-bold tracking-tight">{user.name}</h1>
-          <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-neutral-400">
-            <Mail className="w-4 h-4" />
-            <span>{user.email}</span>
+          <div className="flex flex-col gap-2 mt-3">
+            <div className="flex items-center justify-center md:justify-start gap-2 text-neutral-400">
+              <Mail className="w-4 h-4" />
+              <span>{user.email}</span>
+            </div>
+            <div className="flex justify-center md:justify-start">
+              <UserRating 
+                rating={user?.rating} 
+                totalRatings={user?.totalRatings} 
+                size="sm" 
+                showCount={true}
+              />
+            </div>
           </div>
         </div>
       </div>

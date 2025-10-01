@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../utils/api";
 import { Mail, Sparkles, Lightbulb, Send, UserX, Star } from "lucide-react";
+import UserRating from "../components/UserRating";
 
 // --- Reusable Spinner Component ---
 const Spinner = () => (
@@ -25,13 +26,24 @@ export default function ProfileView() {
     const load = async () => {
       setLoading(true);
       try {
-        const [userRes, ratingRes] = await Promise.all([
-          axios.get(`/users/${name}`, { withCredentials: true }),
-          axios.get(`/rating/user/${encodeURIComponent(name)}`, { withCredentials: true })
-            .catch(() => ({ data: { averageRating: 0, totalRatings: 0 } }))
-        ]);
-        setUser(userRes.data);
-        setUserRating(ratingRes.data);
+        // First get user data
+        const userRes = await axios.get(`/users/${name}`, { withCredentials: true });
+        const userData = userRes.data;
+        setUser(userData);
+        
+        // Then get rating using the user's ID  
+        if (userData._id) {
+          try {
+            const ratingRes = await axios.get(`/rating/user/${userData._id}`, { withCredentials: true });
+            setUserRating(ratingRes.data);
+          } catch (error) {
+            // Use default values from User model
+            setUserRating({ 
+              averageRating: userData.rating || 5.0, 
+              totalRatings: userData.totalRatings || 0 
+            });
+          }
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -81,13 +93,14 @@ export default function ProfileView() {
               <Mail className="w-4 h-4" />
               <span>{user.email}</span>
             </div>
-            {userRating && userRating.totalRatings > 0 && (
-              <div className="flex items-center justify-center md:justify-start gap-2 text-yellow-400">
-                <Star className="w-4 h-4 fill-current" />
-                <span className="font-semibold">{userRating.averageRating}</span>
-                <span className="text-neutral-400">({userRating.totalRatings} reviews)</span>
-              </div>
-            )}
+            <div className="flex justify-center md:justify-start">
+              <UserRating 
+                rating={userRating?.averageRating} 
+                totalRatings={userRating?.totalRatings} 
+                size="sm" 
+                showCount={true}
+              />
+            </div>
           </div>
         </div>
         <button

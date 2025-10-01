@@ -170,7 +170,7 @@ export const getMyMatches = async (req, res) => {
 // Create a new team
 export const createTeam = async (req, res) => {
     try {
-        const { name, description, maxMembers, skillsRequired, category, isPublic } = req.body;
+        const { name, description, maxMembers, skillsRequired, category, event, isPublic } = req.body;
         const creatorId = req.user._id;
 
         if (!name || !description) {
@@ -185,13 +185,15 @@ export const createTeam = async (req, res) => {
             maxMembers: maxMembers || 6,
             skillsRequired: skillsRequired || [],
             category: category || 'hackathon',
+            event: event || null,
             isPublic: isPublic !== false // Default to true unless explicitly false
         });
 
         await team.save();
         const populatedTeam = await TeamModel.findById(team._id)
             .populate('creator', 'name email')
-            .populate('members', 'name email');
+            .populate('members', 'name email')
+            .populate('event', 'name startDate endDate location');
 
         res.status(201).json(populatedTeam);
     } catch (error) {
@@ -217,6 +219,7 @@ export const getAllTeams = async (req, res) => {
         const teams = await TeamModel.find(filter)
             .populate('creator', 'name email')
             .populate('members', 'name email')
+            .populate('event', 'name startDate endDate location')
             .sort({ createdAt: -1 });
 
         res.json(teams);
@@ -239,6 +242,7 @@ export const getMyTeams = async (req, res) => {
         })
         .populate('creator', 'name email')
         .populate('members', 'name email')
+        .populate('event', 'name startDate endDate location')
         .sort({ createdAt: -1 });
 
         res.json(teams);
@@ -417,6 +421,35 @@ export const updateTeam = async (req, res) => {
     } catch (error) {
         console.error('Error updating team:', error);
         res.status(500).json({ message: 'Failed to update team' });
+    }
+};
+
+// Get team requests for teams created by the user
+export const getTeamRequests = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        
+        // Find all teams created by the user
+        const userTeams = await TeamModel.find({ creator: userId });
+        const teamIds = userTeams.map(team => team._id);
+        
+        if (teamIds.length === 0) {
+            return res.json([]);
+        }
+        
+        // Find all pending requests for these teams
+        const requests = await TeamRequest.find({
+            toTeam: { $in: teamIds },
+            status: 'pending'
+        })
+        .populate('fromUser', 'name email')
+        .populate('toTeam', 'name')
+        .sort({ createdAt: -1 });
+        
+        res.json(requests);
+    } catch (error) {
+        console.error('Error fetching team requests:', error);
+        res.status(500).json({ message: 'Failed to fetch team requests' });
     }
 };
 
